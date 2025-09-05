@@ -1,10 +1,17 @@
-﻿using Unity.Entities;
+﻿using Unity.Burst;
+using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
 public partial class MoveSystem : SystemBase
 {
+    protected void OnCreate(ref SystemState state)
+    {
+        //限制只有在有DemoCubeMove和CubeMoveComponentData和ChangeMoveDirIntervalComponentData的情况下才执行
+        Debug.Log("MoveSystem OnCreate");
+    }
+
     protected override void OnUpdate()
     {
         float deltaTime = SystemAPI.Time.DeltaTime;

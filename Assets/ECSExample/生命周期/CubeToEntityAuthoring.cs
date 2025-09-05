@@ -4,16 +4,23 @@ using UnityEngine;
 
 public class CubeToEntityAuthoring : MonoBehaviour
 {
-    class CubeToEntityBaker : Baker<CubeToEntityAuthoring>
+    class MyBaker : Baker<CubeToEntityAuthoring>
     {
         public override void Bake(CubeToEntityAuthoring authoring)
         {
+            Debug.Log("∫Ê≈‡: CubeToEntityAuthoring");
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-            AddComponent(entity, new LocalTransform());
+            AddComponent(entity, new BoidObstacle());
             //AddComponent(entity, new LocalTransform
             //{
             //    Value = authoring.Speed
             //});
         }
     }
+
+
+}
+
+public struct BoidObstacle : IComponentData
+{
 }
