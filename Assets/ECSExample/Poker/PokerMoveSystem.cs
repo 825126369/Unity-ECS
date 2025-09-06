@@ -3,7 +3,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-public partial class MoveSystem : SystemBase
+public partial class PokerMoveSystem : SystemBase
 {
     protected override void OnUpdate()
     {
