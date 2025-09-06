@@ -8,19 +8,32 @@ public partial class MoveSystem : SystemBase
     protected override void OnUpdate()
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
-        Entities.ForEach((ref LocalTransform transform) =>
+        float speed = 1;
+        Entities.ForEach((ref LocalTransform transform, ref MoveParam moveSpeed) =>
         {
-            Debug.Log("移动： ");
-            //transform.Position += new float3(0.5f, 0, 0) * deltaTime; // 每秒向右移动 1 单位
+            if (transform.Position.x > 5)
+            {
+                speed = -4;
+                moveSpeed.x = -4;
+            }
+            else if (transform.Position.x < -5)
+            {
+                speed = 4;
+                moveSpeed.x = 4;
+            }
+
+            Debug.Log("移动： " + speed);
+            transform.Position += new float3(moveSpeed.x, 0, 0) * deltaTime; // 每秒向右移动 1 单位
+
             // 或者直接设置一个新位置
-           // transform.Position = new float3(0, 0, 0);
+            // transform.Position = new float3(0, 0, 0);
             // 也可以同时修改旋转和缩放
             // transform.Rotation = quaternion.RotateY(transform.Rotation.value, 0.1f * deltaTime);
             // transform.Scale = 1.5f;
 
         }).ScheduleParallel(); // 使用 Job System 并行执行
 
-        // 查询组件，更新位置
+        ////查询组件，更新位置
         //foreach (var transform in SystemAPI.Query<RefRW<LocalTransform>>())
         //{
         //    Debug.Log("移动");

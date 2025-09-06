@@ -10,10 +10,10 @@ public class CubeEntityAuthoring : MonoBehaviour
         public override void Bake(CubeEntityAuthoring authoring)
         {
             Debug.Log("烘培: CubeToEntityAuthoring");
-            var entity = GetEntity(TransformUsageFlags.Renderable);
-            //这里必须加个 AddComponent ，否则场景中不会显示这个物体
-            //AddComponent(entity, new LocalTransform());
-            //AddComponent(entity, new BoidObstacle());
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
+            AddComponent(entity, new MoveParam());
+
+            SetComponent(entity, new MoveParam() { x = 5});
 
             //// ✅ 添加 Transform
             //AddComponent(entity, new LocalTransform
@@ -33,8 +33,9 @@ public class CubeEntityAuthoring : MonoBehaviour
             //});
         }
     }
+}
 
-    public struct BoidObstacle : IComponentData
-    {
-    }
+public struct MoveParam : IComponentData
+{
+    public float x;
 }
