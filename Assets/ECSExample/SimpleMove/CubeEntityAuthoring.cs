@@ -11,8 +11,8 @@ public class CubeEntityAuthoring : MonoBehaviour
             Debug.Log("烘培: CubeToEntityAuthoring");
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent(entity, new MoveParam());
-
             SetComponent(entity, new MoveParam() { x = 5});
+            AddComponent<SimpleMoveObj>(entity);
 
             //// ✅ 添加 Transform
             //AddComponent(entity, new LocalTransform
@@ -32,6 +32,11 @@ public class CubeEntityAuthoring : MonoBehaviour
             //});
         }
     }
+}
+
+public struct SimpleMoveObj : IComponentData
+{
+    
 }
 
 public struct MoveParam : IComponentData
