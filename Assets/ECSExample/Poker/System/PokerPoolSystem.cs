@@ -12,12 +12,10 @@ namespace Boids
     [BurstCompile]
     public partial struct PokerPoolSystem : ISystem
     {
-        private EntityQuery _objQuery;
         private static readonly int nMaxCount = 10000;
-
         public void OnCreate(ref SystemState state)
         {
-            _objQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<PokerObj, LocalTransform>().Build(ref state);
+           
         }
 
         public void OnUpdate(ref SystemState state)
@@ -26,23 +24,23 @@ namespace Boids
             var ecb = new EntityCommandBuffer(Allocator.Temp);
             var world = state.World.Unmanaged;
 
-            foreach(var (PokerObjRef, LocalToWorldRef, entity) in SystemAPI.Query<RefRO<PokerObj>, RefRO<LocalToWorld>>().WithEntityAccess())
+            foreach (var (PokerPoolObjRef, LocalToWorldRef, entity) in SystemAPI.Query<RefRO<PokerPoolObj>, RefRO<LocalToWorld>>().WithEntityAccess())
             {
-                var boidEntities = CollectionHelper.CreateNativeArray<Entity, RewindableAllocator>(nMaxCount, ref world.UpdateAllocator);
-                state.EntityManager.Instantiate(PokerObjRef.ValueRO.Prefab, boidEntities);
+                NativeArray<Entity> boidEntities = CollectionHelper.CreateNativeArray<Entity, RewindableAllocator>(nMaxCount, ref world.UpdateAllocator);
+                state.EntityManager.Instantiate(PokerPoolObjRef.ValueRO.Prefab, boidEntities);
                 var LocalToWorldJob = new SetPokerLocalToWorld
                 {
                     LocalToWorldFromEntity = localToWorldLookup,
                     Entities = boidEntities,
                     Center = LocalToWorldRef.ValueRO.Position,
                 };
+
                 state.Dependency = LocalToWorldJob.Schedule(nMaxCount, 64, state.Dependency);
                 state.Dependency.Complete();
                 ecb.DestroyEntity(entity);
             }
 
             ecb.Playback(state.EntityManager);
-            state.EntityManager.RemoveComponent<LocalTransform>(_objQuery);
         }
 
     }
@@ -50,7 +48,8 @@ namespace Boids
     [BurstCompile]
     struct SetPokerLocalToWorld : IJobParallelFor
     {
-        [NativeDisableContainerSafetyRestriction] [NativeDisableParallelForRestriction]
+        [NativeDisableContainerSafetyRestriction]
+        [NativeDisableParallelForRestriction]
         public ComponentLookup<LocalToWorld> LocalToWorldFromEntity;
 
         public NativeArray<Entity> Entities;
@@ -69,5 +68,6 @@ namespace Boids
             };
             LocalToWorldFromEntity[entity] = localToWorld;
         }
+
     }
 }

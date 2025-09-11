@@ -1,24 +1,20 @@
 ﻿using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using UnityEngine;
 
 public partial class SimpleMoveSystem : SystemBase
 {
     protected override void OnUpdate()
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
-        float speed = 1;
         Entities.ForEach((ref LocalTransform transform, ref MoveParam moveSpeed, ref SimpleMoveObj obj) =>
         {
             if (transform.Position.x > 5)
             {
-                speed = -4;
                 moveSpeed.x = -4;
             }
             else if (transform.Position.x < -5)
             {
-                speed = 4;
                 moveSpeed.x = 4;
             }
 
