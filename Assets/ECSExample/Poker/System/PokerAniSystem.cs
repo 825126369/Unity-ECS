@@ -42,7 +42,24 @@ public partial class PokerAniSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        
+        float deltaTime = SystemAPI.Time.DeltaTime;
+        PokerSystemSingleton mGlobalData = SystemAPI.GetSingleton<PokerSystemSingleton>();
+        if(mGlobalData.State == PokerGameState.Start)
+        {
+
+        }
+        else if(mGlobalData.State == PokerGameState.Playing)
+        {
+
+        }
+        else if(mGlobalData.State == PokerGameState.End)
+        {
+
+        }
+        else
+        {
+            Unity.Assertions.Assert.IsTrue(false);
+        }
 
         float deltaTime = SystemAPI.Time.DeltaTime;
         Entities.ForEach((ref LocalTransform transform, ref PokerAnimationComponentData obj) =>

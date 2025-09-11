@@ -44,7 +44,7 @@ public struct PokerSystemIComponentData : IComponentData
     public PokerGameState State;
 }
 
-public struct PokerSystemSingleton
+public struct PokerSystemSingleton : IComponentData
 {
     public float3 worldPos_start;
     public float3 worldPos_ScreenTopLeft;
