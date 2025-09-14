@@ -1,7 +1,10 @@
-﻿using Unity.Entities;
+﻿using Unity.Burst;
+using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
+[RequireMatchingQueriesForUpdate]
+[BurstCompile]
 public partial class SimpleMoveSystem : SystemBase
 {
     protected override void OnUpdate()
