@@ -25,9 +25,14 @@ public partial class PokerSystemInitSystem : SystemBase
             mTargetData = mData.ValueRO;
         }
 
-        // 检查是否已存在单例实体
+        //检查是否已存在单例实体
         if (!SystemAPI.TryGetSingletonEntity<PokerSystemSingleton>(out Entity entity))
         {
+            // 1. 创建实体
+            entity = EntityManager.CreateEntity();
+            // 2. 添加组件（此时组件是默认值）
+            EntityManager.AddComponent<PokerSystemSingleton>(entity);
+
             // 不存在，创建单例实体并添加组件
             var mData = new PokerSystemSingleton();
             mData.worldPos_start = mTargetData.worldPos_start;
@@ -36,5 +41,16 @@ public partial class PokerSystemInitSystem : SystemBase
             mData.State = PokerGameState.Start;
             SystemAPI.SetSingleton(mData);
         }
+
+        //这里就是把一些关键节点 找到对应的实体
+        foreach (var (mData, mEntity) in SystemAPI.Query<RefRO<NodeTagCData>>().WithEntityAccess())
+        {
+            if(mData.ValueRO.Value == "cardsnode")
+            {
+                var mSingle = SystemAPI.GetSingleton<PokerSystemSingleton>();
+                mSingle.cardsNode = mEntity;
+            }
+        }
+
     }
 }

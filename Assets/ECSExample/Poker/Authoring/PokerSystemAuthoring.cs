@@ -1,3 +1,5 @@
+using System;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -37,14 +39,6 @@ public class PokerSystemAuthoring : MonoBehaviour
 }
 
 public struct PokerSystemIComponentData : IComponentData
-{
-    public float3 worldPos_start;
-    public float3 worldPos_ScreenTopLeft;
-    public float3 worldPos_ScreenBottomRight;
-    public PokerGameState State;
-}
-
-public struct PokerSystemSingleton : IComponentData
 {
     public float3 worldPos_start;
     public float3 worldPos_ScreenTopLeft;

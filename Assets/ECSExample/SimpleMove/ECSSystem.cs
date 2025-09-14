@@ -2,6 +2,10 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Transforms;
 
+//性能优化：避免无意义的空更新。比如一个只处理“子弹”的系统，当场景中没有子弹时，根本不需要运行。
+//逻辑安全：确保系统运行时，依赖的数据一定存在，避免空查询或无效操作。
+//代码清晰：明确表达“这个系统只在有相关实体时才工作”。
+[RequireMatchingQueriesForUpdate]
 [BurstCompile]
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 //[UpdateInGroup(typeof(SimulationSystemGroup))]

@@ -12,7 +12,7 @@ public class PokerPoolAuthoring : MonoBehaviour
         public override void Bake(PokerPoolAuthoring authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-            AddComponent(entity, new PokerPoolObj
+            AddComponent(entity, new PokerPoolCData
             {
                 Prefab = GetEntity(authoring.goPrefab, TransformUsageFlags.Renderable | TransformUsageFlags.WorldSpace),
                 Count = authoring.nPoolCount,
@@ -21,7 +21,7 @@ public class PokerPoolAuthoring : MonoBehaviour
     }
 }
 
-public struct PokerPoolObj : IComponentData
+public struct PokerPoolCData: IComponentData
 {
     public Entity Prefab;
     public int Count;
