@@ -76,7 +76,6 @@ struct SetPokerLocalToWorldJob : IJobParallelFor
         mLocalTransform.Scale = scale;
         LocalTransformFromEntity[entity] = mLocalTransform;
     }
-
 }
 
 //这种直接设置 LocalToWorld 对 [SpriteRenderer] 不起作用，初步排查，应该是 虽然变化矩阵更新了，但 SpriteRenderer 没去渲染，
