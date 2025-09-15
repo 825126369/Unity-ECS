@@ -10,6 +10,7 @@ public class PokerAuthoring : MonoBehaviour
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent<PokerAnimationCData>(entity);
+            AddComponent<PokerItemCData>(entity);
         }
     }
 }

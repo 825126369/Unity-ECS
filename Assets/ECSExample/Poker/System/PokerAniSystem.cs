@@ -30,30 +30,30 @@ public partial class PokerAniSystem : SystemBase
         base.OnStopRunning();
     }
 
-    protected override void OnCreateForCompiler()
-    {
-        base.OnCreateForCompiler();
-    }
-
     protected override void OnUpdate()
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
         PokerSystemSingleton mGlobalData = SystemAPI.GetSingleton<PokerSystemSingleton>();
         if (mGlobalData.State == PokerGameState.Start)
         {
-            Show();
+            NativeArray<int> colors = new NativeArray<int>(10, Allocator.Persistent);
+            colors[0] = 0;
+            colors[1] = 1;
+            colors[2] = 2;
+            colors[3] = 3;
+            Show(colors, mGlobalData.worldPos_start, 0, null);
         }
         else if (mGlobalData.State == PokerGameState.Playing)
         {
-            Entities.ForEach((ref LocalTransform transform, ref PokerAnimationCData obj) =>
+            for (int index = 0; index < mGlobalData.animationEntitys.Length; index++)
             {
-                this.updateAnimation(obj, deltaTime);
-
-            }).ScheduleParallel();
+                var entity = mGlobalData.animationEntitys[index];
+                this.updateAnimation(entity, deltaTime);
+            }
         }
         else if (mGlobalData.State == PokerGameState.End)
         {
-            UnityMainThreadDispatcher.Instance.Enqueue(new MainThreadData_End());
+           // UnityMainThreadDispatcher.Instance.Enqueue(new MainThreadData_End());
         }
         else
         {
@@ -61,243 +61,213 @@ public partial class PokerAniSystem : SystemBase
         }
     }
 
-    void Awake()
-    {
-        RectTransform tUITransform = GameLauncher.Instance.mUIRoot.mCanvas_Tip;
-        this.animationSize = new Vector2(tUITransform.rect.width, tUITransform.rect.height);
-
-        this.maxHeight = this.animationSize.y / 2;
-        this.minHeight = -this.animationSize.y / 2 + 100;
-        this.maxWidth = this.animationSize.x / 2 + CardWidth;
-        this.minWidth = -this.animationSize.x / 2 - CardWidth;
-
-        this.maxWidth /= GameLauncher.Instance.mUIRoot.mCanvas_WinAnimation.localScale.x;
-        this.minWidth /= GameLauncher.Instance.mUIRoot.mCanvas_WinAnimation.localScale.x;
-
-        this.cardsNode = this.transform.FindDeepChild("cardsnode").GetComponent<RectTransform>();
-        this.cardsNode.gameObject.removeAllChildren();
-    }
-
     public void Show(NativeArray<int> colors, float3 startPt_w, int offsetX, Action callback)
     {
-        this.animationOver = false;
-        this.skipNode.SetActive(true);
-        this.colors = new NativeArray<int>();
-        this.colors.add(element);
-        this.callBack = callback;
-        this.showAnimation(colors, startPt_w, offsetX);
-    }
+        PokerSystemSingleton mInstance = SystemAPI.GetSingleton<PokerSystemSingleton>();
 
-    void showAnimation(ref NativeList<int> colors, float3 startPt_w, int offsetX = 0)
-    {
-        Vector3 firstPt_l = GameTools.WorldToUILocalPos(startPt_w, this.cardsNode);
-        this.showAnimation_Default(firstPt_l, colors, offsetX);
-    }
+        mInstance.animationOver = false;
+        mInstance.colors = CollectionHelper.CreateNativeArray<int>(4, AllocatorManager.Persistent);
+        for (int index = 0; index < colors.Length; index++)
+        {
+            mInstance.colors[index] = colors[index];
+        }
+        //mInstance.callBack = callback;
 
-    // 默认弹跳动画。
-    void showAnimation_Default(Vector3 pt, TSArray<CardType> colors, int offsetX)
-    {
+        float3 firstPt_l = mInstance.worldPos_start;
         float delay = 0.1f;
-        for (int index = 0; index < colors.length; index++)
+        for (int i = 0; i < colors.Length; i++)
         {
-            CardType color = colors[index];
-            int offset = offsetX * index;
-            Vector3 frompt = new Vector3(pt.x + index * (CardWidth - 1) + offset, pt.y, pt.z);
-            delay = index * 0.5f; //+ 0.1;  
-            this.showAnimation_Default_Col(index, frompt, delay, color, offsetX);
+            int color = colors[i];
+            int offset = offsetX * i;
+            Vector3 frompt = new Vector3(firstPt_l.x + i * (PokerSystemSingleton.CardWidth - 1) + offset, firstPt_l.y, firstPt_l.z);
+            delay = i * 0.5f;
+            float delayvalue = 0;
+            float delayoffset = 0.1f;
+            for (int j = 13; j > 0; j--)
+            {
+                this.showAnimation_Default_ColValue(i, frompt, delay + delayvalue, color, j, offsetX);
+                delayvalue += delayoffset;
+            }
         }
+
     }
-
-    // 每一个位置的动画
-    void showAnimation_Default_Col(int colindex, Vector3 pt, float delay, CardType color, int offsetX = 0)
+    
+    void showAnimation_Default_ColValue(int colindex, Vector3 pt, float delay, int color, int value, int offsetX = 0)
     {
-        float delayvalue = 0;
-        float delayoffset = 0.1f;
-        for (int index = 13; index > 0; index--)
-        {
-            this.showAnimation_Default_ColValue(colindex, pt, delay + delayvalue, color, index, offsetX);
-            delayvalue += delayoffset;
-        }
-    }
+        PokerSystemSingleton mInstance = SystemAPI.GetSingleton<PokerSystemSingleton>();
 
-
-    // 每一列中，单个数字的移动。
-    void showAnimation_Default_ColValue(int colindex, Vector3 pt, float delay, CardType color, int value, int offsetX = 0)
-    {
-        (GameObject node, bool) ret = this.addStaticCard(pt, color, value, colindex);
+        (Entity node, bool) ret = this.addStaticCard(pt, color, value, colindex);
         var startNode = ret.node;
 
-        var entity = AnimationEntity.create(colindex, color, value);
-        entity.open = true;
-        entity.trigger = false;
-        entity.triggerDelay = delay;
-        entity.btoRight = AnimationEntity.toRight(colindex);
-        entity.startPt = pt;
-        entity.nowPt = pt;
-        entity.firstNode = startNode;
-        entity.maxHeight = this.maxHeight;
+        var entity = EntityPoolManager.Instance.Spawn(mInstance.Prefab, PoolTagConst.Poker);
 
-        entity.vx = AnimationEntity.randomVx();
-        entity.vx_a = 0;
+        PokerAnimationCData mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData>(entity);
+        mPokerAnimationCData.Init(colindex, color, value);
+        mPokerAnimationCData.open = true;
+        mPokerAnimationCData.trigger = false;
+        mPokerAnimationCData.triggerDelay = delay;
+        mPokerAnimationCData.btoRight = PokerAnimationCData.toRight(colindex);
+        mPokerAnimationCData.startPt = pt;
+        mPokerAnimationCData.nowPt = pt;
+        mPokerAnimationCData.mEntity = entity;
+        mPokerAnimationCData.maxHeight = mInstance.maxHeight;
+        mPokerAnimationCData.vx = PokerAnimationCData.randomVx();
+        mPokerAnimationCData.vx_a = 0;
+        mPokerAnimationCData.vy = PokerAnimationCData.randomVy();
 
-        entity.vy = AnimationEntity.randomVy();
-        if (!entity.btoRight)
+        if (!mPokerAnimationCData.btoRight)
         {
-            entity.vx *= -1;
+            mPokerAnimationCData.vx *= -1;
         }
 
-        entity.vy_a = AnimationEntity.randomVy_a();
-        entity.deltTime = 0;
-        entity.firstNode = startNode;
-        this.animationEntitys.push(entity);
-        startNode.transform.SetSiblingIndex(0);
-
+        mPokerAnimationCData.vy_a = PokerAnimationCData.randomVy_a();
+        mPokerAnimationCData.deltTime = 0;
+        mInstance.animationEntitys.Add(entity);
     }
 
     // 检查是否最后一个队列中的最后一个，标志动画结束。   
-    (GameObject, bool) addStaticCard(Vector3 pt, CardType colorType, int value, int colindex)
+    (Entity, bool) addStaticCard(float3 pt, int colorType, int value, int colindex)
     {
-        int nodekey = AnimationEntity.getCardId(colorType, value);
-        TSArray<CardAnimationItem> nodeArrs = this.colNodes_Dic.get(nodekey);
-        if (nodeArrs == null)
+        PokerSystemSingleton mInstance = SystemAPI.GetSingleton<PokerSystemSingleton>();
+
+        int nodekey = PokerAnimationCData.getCardId(colorType, value);
+        if (!mInstance.colNodes_Dic.TryGetValue(nodekey, out NativeList<Entity> nodeArrs))
         {
-            nodeArrs = new TSArray<CardAnimationItem>();
-            this.colNodes_Dic.set(nodekey, nodeArrs);
+            nodeArrs = new NativeList<Entity>(Allocator.Persistent);
+            mInstance.colNodes_Dic.Add(nodekey, nodeArrs);
         }
 
         bool firstNodeByNewValue = false;
-        if (value == 13 && nodeArrs.length == 0)
+        if (value == 13 && nodeArrs.Length == 0)
         {
             firstNodeByNewValue = true;
         }
 
-        AnimationEntity entity = null;
+        Entity mTargetEntity = Entity.Null;
         // 从后往前找，找到第一个。
-        for (int index = this.animationEntitys.length - 1; index >= 0; index--)
+        for (int index = mInstance.animationEntitys.Length - 1; index >= 0; index--)
         {
-            AnimationEntity element = this.animationEntitys[index];
-            if (element.color == colorType && element.value == value && element.index == colindex)
+            var mEntity = mInstance.animationEntitys[index];
+            var mPokerAnimationCData2 = EntityManager.GetComponentData<PokerAnimationCData>(mEntity);
+            if (mPokerAnimationCData2.color == colorType && mPokerAnimationCData2.value == value && mPokerAnimationCData2.index == colindex)
             {
-                entity = element;
+                mTargetEntity = mEntity;
                 break;
             }
         }
 
-        if (nodeArrs.length >= CardsColTotal)
+        if (nodeArrs.Length >= PokerSystemSingleton.CardsColTotal)
         {
-            if (entity == null)
+            if (mTargetEntity == null)
             {
 
             }
             else
             {
-                if (entity.color == this.colors[this.colors.length - 1] && entity.value == 1)
+                var mPokerAnimationCData2 = EntityManager.GetComponentData<PokerAnimationCData>(mTargetEntity);
+                if (mPokerAnimationCData2.color == mInstance.colors[mInstance.colors.Length - 1] && mPokerAnimationCData2.value == 1)
                 {
                     this.onAnimatinCallBack();
                     this.DoDestroyAction();
                 }
-
             }
-            return (null, firstNodeByNewValue);
+            return (Entity.Null, firstNodeByNewValue);
         }
 
-        CardAnimationItem startNode = ResCenter.Instance.mCardAnimationItemPool.popObj();
-        startNode.transform.SetParent(this.cardsNode.transform, false);
-        startNode.transform.localPosition = pt;
-        nodeArrs.push(startNode);
+        Entity startNode = EntityPoolManager.Instance.Spawn(mInstance.Prefab, PoolTagConst.Poker);
+        LocalTransform mLocalTransform = EntityManager.GetComponentData<LocalTransform>(startNode);
+        PokerAnimationCData mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData>(mTargetEntity);
+        PokerItemCData mPokerItemCData = EntityManager.GetComponentData<PokerItemCData>(mTargetEntity);
 
-        startNode.initByNum(value, colorType);
+        EntityManager.AddComponentData(startNode, new Parent { Value = mInstance.cardsNode });
+        mLocalTransform.Position = pt;
+        nodeArrs.Add(startNode);
 
-        this.allNodes.push(startNode);
-        return (startNode.gameObject, firstNodeByNewValue);
+        mPokerItemCData.initByNum(value, colorType);
+        mInstance.allNodes.Add(startNode);
+        return (startNode, firstNodeByNewValue);
     }
 
-    void updateAnimation(PokerAnimationCData entity, LocalTransform lt, float dt)
+    void updateAnimation(Entity mEntity, float dt)
     {
-        if (!entity.open)
+        PokerSystemSingleton mInstance = SystemAPI.GetSingleton<PokerSystemSingleton>();
+        PokerAnimationCData mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData>(mEntity);
+        LocalTransform mLocalTransform = EntityManager.GetComponentData<LocalTransform>(mEntity);
+        if (!mPokerAnimationCData.open)
         {
             return;
         }
 
-        if (entity.trigger)
+        if (mPokerAnimationCData.trigger)
         {
             // 没有节点的时候，不更新。
-            if (entity.firstNode == null)
+            if (mEntity == Entity.Null)
             {
                 return;
             }
 
-            var deltTime = entity.deltTime;
-            var startPt = entity.nowPt;
-            var firstNode = entity.firstNode;
-            var maxHeight = entity.maxHeight;
-            var toRight = entity.btoRight;
-            var vx_a = entity.vx_a;
-            var vy_a = entity.vy_a;
+            var deltTime = mPokerAnimationCData.deltTime;
+            var startPt = mPokerAnimationCData.nowPt;
+            var maxHeight = mPokerAnimationCData.maxHeight;
+            var toRight = mPokerAnimationCData.btoRight;
+            var vx_a = mPokerAnimationCData.vx_a;
+            var vy_a = mPokerAnimationCData.vy_a;
 
             var nowPt = new Vector3(0, 0, 0);
-
             // 匀变速直线运动位移公式：a=dv/dt，
             // 距离 x = v0t+1/2·at^2
 
             // 现在速度
-            entity.vx += vx_a * dt;
-            entity.vy += vy_a * dt;
-
-            var vx = entity.vx;
-            var vy = entity.vy;
+            mPokerAnimationCData.vx += vx_a * dt;
+            mPokerAnimationCData.vy += vy_a * dt;
+            var vx = mPokerAnimationCData.vx;
+            var vy = mPokerAnimationCData.vy;
 
             nowPt.x = (float)(startPt.x + vx * dt + 0.5f * vx_a * dt * dt);
             nowPt.y = (float)(startPt.y + vy * dt + 0.5f * vy_a * dt * dt);
             nowPt.z = startPt.z;
 
             // 垂直. 小于最低值。
-            if (nowPt.y < this.minHeight)
+            if (nowPt.y < mInstance.minHeight)
             {
-                nowPt.y = this.minHeight;
-                entity.vy *= -0.95f;  //转变方向
+                nowPt.y = mInstance.minHeight;
+                mPokerAnimationCData.vy *= -0.95f;  //转变方向
             }
 
-            if (nowPt.y > entity.maxHeight)
+            if (nowPt.y > mPokerAnimationCData.maxHeight)
             {
-                nowPt.y = entity.maxHeight;
-                // vy_a = -vy_a;
-                entity.vy = 0;
-                entity.maxHeight = entity.maxHeight * 0.8f;
+                nowPt.y = mPokerAnimationCData.maxHeight;
+                mPokerAnimationCData.vy = 0;
+                mPokerAnimationCData.maxHeight = mPokerAnimationCData.maxHeight * 0.8f;
             }
-
-
-            // X轴移除就消失。
+            
             bool willRemove = false;
-            // 水平 不会碰撞后返回了。
-            if (nowPt.x < this.minWidth - CardWidth)
+            if (nowPt.x < mInstance.minWidth - PokerSystemSingleton.CardWidth)
             {
-                nowPt.x = this.minWidth;
+                nowPt.x = mInstance.minWidth;
                 willRemove = true;
             }
 
-            if (nowPt.x > this.maxWidth + CardWidth)
+            if (nowPt.x > mInstance.maxWidth + PokerSystemSingleton.CardWidth)
             {
-                nowPt.x = this.maxWidth;
-                entity.vx *= -1;
+                nowPt.x = mInstance.maxWidth;
+                mPokerAnimationCData.vx *= -1;
                 willRemove = true;
-
-
             }
 
             // 每两帧之间 添加
-            entity.checktimes += 1;
-            firstNode.transform.localPosition = nowPt;
-            entity.nowPt = nowPt;
+            mPokerAnimationCData.checktimes += 1;
+            mLocalTransform.Position = nowPt;
+            mPokerAnimationCData.nowPt = nowPt;
 
             // 碰到边界，不在产生新的额
-            if (entity.open)
+            if (mPokerAnimationCData.open)
             {
-                firstNode.transform.localPosition = nowPt;
+                mLocalTransform.Position = nowPt;
                 if (willRemove)
                 {
-                    entity.open = false;
-                    if (entity.value == 6 && entity.index == 2)
+                    mPokerAnimationCData.open = false;
+                    if (mPokerAnimationCData.value == 6 && mPokerAnimationCData.index == 2)
                     {
                         this.onAnimatinCallBack();
                         this.DoDestroyAction();
@@ -308,53 +278,53 @@ public partial class PokerAniSystem : SystemBase
         }
         else
         {
-
-            entity.triggerDelay -= dt;
-            if (entity.triggerDelay <= 0)
+            mPokerAnimationCData.triggerDelay -= dt;
+            if (mPokerAnimationCData.triggerDelay <= 0)
             {
-                entity.trigger = true;
+                mPokerAnimationCData.trigger = true;
             }
         }
     }
 
     void onAnimatinCallBack()
     {
-        if (this.callBack != null)
-        {
-            this.callBack();
-            this.callBack = null;
-        }
+        //if (this.callBack != null)
+        //{
+        //    this.callBack();
+        //    this.callBack = null;
+        //}
     }
 
     public void DoDestroyAction()
     {
-        if (this.animationOver)
+        PokerSystemSingleton mInstance = SystemAPI.GetSingleton<PokerSystemSingleton>();
+        if (mInstance.animationOver)
         {
             return;
         }
 
-        this.animationOver = true;
-        for (int index = 0; index < this.animationEntitys.length; index++)
+        mInstance.animationOver = true;
+        for (int index = 0; index < mInstance.animationEntitys.Length; index++)
         {
-            AnimationEntity element = this.animationEntitys[index];
-            element.open = false;
+            var mEntity = mInstance.animationEntitys[index];
+            PokerAnimationCData mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData>(mEntity);
+            mPokerAnimationCData.open = false;
         }
-        this.animationEntitys = new TSArray<AnimationEntity>();
+        mInstance.animationEntitys.Clear();
 
-        foreach (var v in this.allNodes)
+        foreach (var v in mInstance.allNodes)
         {
-            ResCenter.Instance.mCardAnimationItemPool.recycleObj(v);
+            EntityPoolManager.Instance.Recycle(v);
         }
-        this.allNodes.Clear();
-        Destroy(gameObject);
+        mInstance.allNodes.Clear();
     }
 
     public void onClick_Skip()
     {
-        this.skipNode.SetActive(false);
-        AudioController.Instance.playSound(Sounds.button, 1);
-        this.onAnimatinCallBack();
-        this.DoDestroyAction();
-        TAController.Instance.trackAnimationSkip();
+        //this.skipNode.SetActive(false);
+        //AudioController.Instance.playSound(Sounds.button, 1);
+        //this.onAnimatinCallBack();
+        //this.DoDestroyAction();
+        //TAController.Instance.trackAnimationSkip();
     }
 }

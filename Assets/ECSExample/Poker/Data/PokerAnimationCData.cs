@@ -1,8 +1,57 @@
 using Unity.Entities;
 using UnityEngine;
 
-public struct PokerAnimationCData : IComponentData
+public struct PokerItemCData : IComponentData
 {
+    //public SpriteRenderer n_card = null;
+    //public SpriteRenderer n_back = null;
+    //public GameObject n_root = null;
+    //public CardType cardHuase = CardType.FangPian;
+    //public int cardDianshu = 0;
+    //public int nCardId = 0;
+
+    public void initByNum(int cardNum, int colorType)
+    {
+        //this.cardDianshu = cardNum;
+        //this.cardHuase = colorType;
+        //this.nCardId = ((int)this.cardHuase - 1) * 13 + this.cardDianshu;
+
+        ////刷新花色点数ui
+        //Image sp_ = this.n_card;
+        //int id = DataCenter.Instance.sysConfig.themeZhengId;
+        //string path = "cards" + id;
+        //SpriteAtlas atl_game = ResCenter.Instance.mBundleGameAllRes.GetAtlas(path);
+
+        //string p_name = "di_" + this.cardDianshu + "_" + (int)this.cardHuase;
+        //Sprite spri_bg = atl_game.GetSprite(p_name);
+        //PrintTool.Assert(spri_bg != null, p_name);
+        //sp_.sprite = spri_bg;
+
+        //SpriteAtlas atl_game1 = ResCenter.Instance.mBundleGameAllRes.GetAtlas(AtlasNames.Lobby_Game_Cards_Cardback);
+        //Image sp_back = this.n_back;
+        //string p_name_back = "cardback_" + DataCenter.Instance.sysConfig.themeBackId;
+        //Sprite spri_bg_back = atl_game1.GetSprite(p_name_back);
+        //sp_back.sprite = spri_bg_back;
+
+        //this.onSetNormal();
+    }
+
+    void onSetBack()
+    {
+        //this.n_card.gameObject.SetActive(false);
+        //this.n_back.gameObject.SetActive(true);
+    }
+
+    void onSetNormal()
+    {
+        //this.n_back.gameObject.SetActive(false);
+        //this.n_card.gameObject.SetActive(true);
+    }
+}
+
+public class PokerAnimationCData : IComponentData
+{
+    public Entity mEntity;
     public int index;
     public int value;
     public int cardid;
@@ -20,11 +69,9 @@ public struct PokerAnimationCData : IComponentData
     public float vyMax; // y方向的最大速度
     public float vx_a;  // x方向的加速度 x轴匀速
     public float vy_a;  // y方向的加速度
-   // public GameObject firstNode;
     public float maxHeight;   //每次更新最高值。
-
-
-    public void Init()
+    
+    public void Reset()
     {
         index = 0; //第几个col的
         value = 13;
@@ -47,6 +94,14 @@ public struct PokerAnimationCData : IComponentData
         vy_a = 0;  // y方向的加速度
         //firstNode = null!;
         maxHeight = 0;   //每次更新最高值。
+    }
+
+    public void Init(int index, int color, int value)
+    {
+        this.color = color;
+        this.index = index;
+        this.value = value;
+        this.cardid = PokerAnimationCData.getCardId(color, value);
     }
 
     public static bool toRight(int index)
@@ -77,13 +132,4 @@ public struct PokerAnimationCData : IComponentData
         return (int)color * 13 + value;
     }
 
-    public static PokerAnimationCData create(int index, int color, int value)
-    {
-        PokerAnimationCData entity = new PokerAnimationCData();
-        entity.color = color;
-        entity.index = index;
-        entity.value = value;
-        entity.cardid = PokerAnimationCData.getCardId(color, value);
-        return entity;
-    }
 }
