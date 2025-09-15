@@ -1,7 +1,4 @@
-using System;
-using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,12 +12,12 @@ public class PokerSystemAuthoring : MonoBehaviour
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
-            (Vector3 topLeft, Vector3 bottomRight) = authoring.GetScreenCornersWorldPoints();
-            var mData = new PokerSystemIComponentData();
-            mData.worldPos_start = authoring.startPt_obj.transform.position;
-            mData.worldPos_ScreenTopLeft = topLeft;
-            mData.worldPos_ScreenBottomRight = bottomRight;
-            AddComponent(entity, mData);
+            //(Vector3 topLeft, Vector3 bottomRight) = authoring.GetScreenCornersWorldPoints();
+            //var mData = new PokerSystemCData();
+            //mData.worldPos_start = authoring.startPt_obj.transform.position;
+            //mData.worldPos_ScreenTopLeft = topLeft;
+            //mData.worldPos_ScreenBottomRight = bottomRight;
+            //AddComponent(entity, mData);
         }
     }
     
@@ -36,13 +33,5 @@ public class PokerSystemAuthoring : MonoBehaviour
         return (topLeft, bottomRight);
     }
 
-}
-
-public struct PokerSystemIComponentData : IComponentData
-{
-    public float3 worldPos_start;
-    public float3 worldPos_ScreenTopLeft;
-    public float3 worldPos_ScreenBottomRight;
-    public PokerGameState State;
 }
 

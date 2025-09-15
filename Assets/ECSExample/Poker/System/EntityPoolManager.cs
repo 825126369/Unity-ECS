@@ -36,9 +36,9 @@ public partial class EntityPoolManager : SystemBase
 
     protected override void OnUpdate()
     {
-        
+
     }
-    
+
     public Entity Spawn(Entity prefab, int poolId)
     {
         if (!_pools.TryGetValue(poolId, out var pool))
@@ -46,7 +46,7 @@ public partial class EntityPoolManager : SystemBase
             pool = new NativeList<Entity>(Allocator.Persistent);
             _pools[poolId] = pool;
         }
-        
+
         for (int i = 0; i < pool.Length; i++)
         {
             var entity = pool[i];
@@ -63,7 +63,7 @@ public partial class EntityPoolManager : SystemBase
         EntityManager.AddComponentData(newEntity, new PoolTag { PoolId = poolId });
         return newEntity;
     }
-    
+
     public void Recycle(Entity entity)
     {
         if (!EntityManager.Exists(entity) || !EntityManager.HasComponent<PoolTag>(entity))
@@ -81,7 +81,7 @@ public partial class EntityPoolManager : SystemBase
         ResetEntity(entity);
         pool.Add(entity);
     }
-    
+
     private void ResetEntity(Entity entity)
     {
         if (!EntityManager.HasComponent<Disabled>(entity))

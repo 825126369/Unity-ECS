@@ -19,6 +19,13 @@ public enum CardType
     HeiTao = 4
 }
 
+public struct PokerSystemCData : IComponentData
+{
+    public float3 worldPos_start;
+    public float3 worldPos_ScreenTopLeft;
+    public float3 worldPos_ScreenBottomRight;
+}
+
 public struct PokerSystemSingleton : IComponentData, IDisposable
 {
     public float3 worldPos_start;

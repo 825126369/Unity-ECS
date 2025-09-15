@@ -32,33 +32,34 @@ public partial class PokerAniSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        float deltaTime = SystemAPI.Time.DeltaTime;
-        PokerSystemSingleton mGlobalData = SystemAPI.GetSingleton<PokerSystemSingleton>();
-        if (mGlobalData.State == PokerGameState.Start)
-        {
-            NativeArray<int> colors = new NativeArray<int>(10, Allocator.Persistent);
-            colors[0] = 0;
-            colors[1] = 1;
-            colors[2] = 2;
-            colors[3] = 3;
-            Show(colors, mGlobalData.worldPos_start, 0, null);
-        }
-        else if (mGlobalData.State == PokerGameState.Playing)
-        {
-            for (int index = 0; index < mGlobalData.animationEntitys.Length; index++)
-            {
-                var entity = mGlobalData.animationEntitys[index];
-                this.updateAnimation(entity, deltaTime);
-            }
-        }
-        else if (mGlobalData.State == PokerGameState.End)
-        {
-           // UnityMainThreadDispatcher.Instance.Enqueue(new MainThreadData_End());
-        }
-        else
-        {
-            Unity.Assertions.Assert.IsTrue(false);
-        }
+        //float deltaTime = SystemAPI.Time.DeltaTime;
+        //PokerSystemSingleton mGlobalData = SystemAPI.GetSingleton<PokerSystemSingleton>();
+        //if (mGlobalData.State == PokerGameState.Start)
+        //{
+        //    //NativeArray<int> colors = new NativeArray<int>(4, Allocator.Persistent);
+        //    //colors[0] = 0;
+        //    //colors[1] = 1;
+        //    //colors[2] = 2;
+        //    //colors[3] = 3;
+        //    //Show(colors, mGlobalData.worldPos_start, 0, null);
+        //    //mGlobalData.State = PokerGameState.Playing;
+        //}
+        //else if (mGlobalData.State == PokerGameState.Playing)
+        //{
+        //    //for (int index = 0; index < mGlobalData.animationEntitys.Length; index++)
+        //    //{
+        //    //    var entity = mGlobalData.animationEntitys[index];
+        //    //    this.updateAnimation(entity, deltaTime);
+        //    //}
+        //}
+        //else if (mGlobalData.State == PokerGameState.End)
+        //{
+        //   // UnityMainThreadDispatcher.Instance.Enqueue(new MainThreadData_End());
+        //}
+        //else
+        //{
+        //    Unity.Assertions.Assert.IsTrue(false);
+        //}
     }
 
     public void Show(NativeArray<int> colors, float3 startPt_w, int offsetX, Action callback)
@@ -66,7 +67,7 @@ public partial class PokerAniSystem : SystemBase
         PokerSystemSingleton mInstance = SystemAPI.GetSingleton<PokerSystemSingleton>();
 
         mInstance.animationOver = false;
-        mInstance.colors = CollectionHelper.CreateNativeArray<int>(4, AllocatorManager.Persistent);
+        mInstance.colors = new NativeArray<int>(4, Allocator.Persistent);
         for (int index = 0; index < colors.Length; index++)
         {
             mInstance.colors[index] = colors[index];
@@ -91,7 +92,7 @@ public partial class PokerAniSystem : SystemBase
         }
 
     }
-    
+
     void showAnimation_Default_ColValue(int colindex, Vector3 pt, float delay, int color, int value, int offsetX = 0)
     {
         PokerSystemSingleton mInstance = SystemAPI.GetSingleton<PokerSystemSingleton>();
@@ -240,7 +241,7 @@ public partial class PokerAniSystem : SystemBase
                 mPokerAnimationCData.vy = 0;
                 mPokerAnimationCData.maxHeight = mPokerAnimationCData.maxHeight * 0.8f;
             }
-            
+
             bool willRemove = false;
             if (nowPt.x < mInstance.minWidth - PokerSystemSingleton.CardWidth)
             {
@@ -288,6 +289,9 @@ public partial class PokerAniSystem : SystemBase
 
     void onAnimatinCallBack()
     {
+        PokerSystemSingleton mInstance = SystemAPI.GetSingleton<PokerSystemSingleton>();
+        mInstance.State = PokerGameState.End;
+
         //if (this.callBack != null)
         //{
         //    this.callBack();

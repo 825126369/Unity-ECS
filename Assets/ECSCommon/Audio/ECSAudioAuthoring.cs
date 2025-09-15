@@ -12,7 +12,7 @@ public class ECSAudioAuthoring : MonoBehaviour
     public float spatialBlend = 1.0f; // 1=3D, 0=2D
     public float minDistance = 1.0f;
     public float maxDistance = 50.0f;
-    
+
     class mBaker : Baker<ECSAudioAuthoring>
     {
         public override void Bake(ECSAudioAuthoring authoring)

@@ -16,8 +16,8 @@ public partial class PokerSystemInitSystem : SystemBase
 
     private void InitSingleton()
     {
-        PokerSystemIComponentData mTargetData = default;
-        foreach (var mData in SystemAPI.Query<RefRO<PokerSystemIComponentData>>())
+        PokerSystemCData mTargetData = default;
+        foreach (var mData in SystemAPI.Query<RefRO<PokerSystemCData>>())
         {
             mTargetData = mData.ValueRO;
         }
