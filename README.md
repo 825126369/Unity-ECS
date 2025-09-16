@@ -16,9 +16,8 @@ DOTS 的基础设施：
 
 3：实际ECS 逻辑：空当接龙案例
 (1) OnUpdate  一帧内可能被调度了多次（查询变更、内部触发) 
-(2) -- 查询某个Data 是否存在, 由于一帧内可能多次触发 OnUpdate, 所以 有可能 某次 OnUpdate 查询结果为 null，
-    -- 烘培的实体和动态创建的实体 加载的时机不一样，这也导致了,Update 的触发时机，有可能是第一帧，也有可能是第三帧。 PokerSystemInitFinishCData 和  PokerPoolCData 分别是 两类不同的实体，他们的加载时机不一样
-    -- 总结 初始化系统的时候，得检查 初始系统状态是否正确。 如下：
+(2) -- 烘培的实体和动态创建的实体 加载的时机不一样，这也导致了OnUpdate的触发时机，有可能是第一帧，也有可能是第三帧, 或其他帧。 PokerSystemInitFinishCData 和  PokerPoolCData 分别是 两类不同的实体，他们的加载时机不一样
+    -- 总结 初始化系统的时候，得检查 初始系统状态是否 就绪/正确。 如下：
     
     protected override void OnUpdate()
     {
