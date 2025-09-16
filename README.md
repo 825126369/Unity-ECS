@@ -17,11 +17,12 @@ DOTS 的基础设施：
 3：实际ECS 逻辑：空当接龙案例
 (1) OnUpdate  一帧内可能被调度了多次（查询变更、内部触发) 
 (2) 查询某个Data 是否存在, 由于一帧内可能多次触发 OnUpdate, 所以 有可能 某次 OnUpdate 查询结果为 null，如下：
+
     protected override void OnUpdate()
     {
         Debug.Log($"OnUpdate 被调用，Enabled = {Enabled}");
         Enabled = false;
-        
+
         //等待 信号完成，执行后面的
         //这个代码块 会导致 下面的组件 在前几次调用 OnUpdate 时，返回 null, 但这帧最后一次调用OnUpdate 时， 还是找到了
         //把这个代码块注释掉， 下面的组件 第一次就能找到
@@ -44,6 +45,7 @@ DOTS 的基础设施：
        // EntityManager.DestroyEntity(mTempEntity);
         Enabled = false;
     }
+    
 (3) Data 如果包含 NativeList 等相关集合，不能用于GameObject烘培, 能否用于 单例（SystemAPI.SetSingleton）还待观察。
 
 如果你看到物体没渲染出来， 不管是编辑模式，还是运行模式，都是前两步出错导致
