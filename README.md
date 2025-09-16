@@ -10,6 +10,8 @@ UI Toolkit:
 DOTS 的基础设施：
 1： URP, UI Toolkit, New Input System, ECS 得务必首先把这些 组件加到项目中来。
 
-2：SubScene 是 Authoring 烘培的启动器，如果想把GameObject 世界和 Entity 世界 打通，靠的就是 SubScene 的力量，把一切场景中加上 Bake 脚本 的物体，进行烘培。 SubScene 需要点击 New Sub Scene 创建，手动添加 SubScene 会有问题
+2：SubScene 
+(1) SubScene 是 Authoring(创作) 的容器/舞台/编辑器，顾名思义: SubScene 就是 在GameObject世界里进行创作，通过在编译阶段烘培为 Entity世界。游戏启动后，创作阶段的GameObject世界全都会被Skip掉. 所以 SubScene 下面的所有GameObject 在运行阶段都不会执行 Awake, Start 这些生命周期函数，因为 这些GameObject 都被忽略掉了。
+(2) SubScene 需要点击 New Sub Scene 创建，手动添加 SubScene 会有问题。
 
 如果你看到物体没渲染出来， 不管是编辑模式，还是运行模式，都是前两步出错导致

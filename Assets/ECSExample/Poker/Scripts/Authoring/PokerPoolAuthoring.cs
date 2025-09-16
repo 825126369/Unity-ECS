@@ -19,6 +19,7 @@ public class PokerPoolAuthoring : MonoBehaviour
             });
         }
     }
+
 }
 
 public struct PokerPoolCData: IComponentData

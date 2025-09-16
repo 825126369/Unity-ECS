@@ -26,38 +26,41 @@ public partial class PokerSystemInitSystem : SystemBase
 
     private void InitSingleton()
     {
-        PokerSystemCData mTargetData = default;
-        foreach (var mData in SystemAPI.Query<RefRO<PokerSystemCData>>())
-        {
-            mTargetData = mData.ValueRO;
-        }
+        //PokerSystemCData mTargetData = default;
+        //foreach (var mData in SystemAPI.Query<RefRO<PokerSystemCData>>())
+        //{
+        //    mTargetData = mData.ValueRO;
+        //}
 
         //检查是否已存在单例实体
         if (!SystemAPI.TryGetSingletonEntity<PokerSystemSingleton>(out Entity entity))
         {
-            // 1. 创建实体
             entity = EntityManager.CreateEntity();
-            // 2. 添加组件（此时组件是默认值）
             EntityManager.AddComponent<PokerSystemSingleton>(entity);
-
-            // 不存在，创建单例实体并添加组件
-            var mData = new PokerSystemSingleton();
-            mData.worldPos_start = PokerGoMgr.Instance.startPt_obj.transform.position;
-            mData.worldPos_ScreenTopLeft = PokerGoMgr.Instance.TopLeft_obj.transform.position;
-            mData.worldPos_ScreenBottomRight = PokerGoMgr.Instance.BottomRight_obj.transform.position;
-            mData.State = PokerGameState.Start;
-            SystemAPI.SetSingleton(mData);
         }
+
+        var mPokerSystemSingleton = SystemAPI.GetSingleton<PokerSystemSingleton>();
+        mPokerSystemSingleton.worldPos_start = PokerGoMgr.Instance.startPt_obj.transform.position;
+        mPokerSystemSingleton.worldPos_ScreenTopLeft = PokerGoMgr.Instance.TopLeft_obj.transform.position;
+        mPokerSystemSingleton.worldPos_ScreenBottomRight = PokerGoMgr.Instance.BottomRight_obj.transform.position;
+        mPokerSystemSingleton.State = PokerGameState.Start;
 
         //这里就是把一些关键节点 找到对应的实体
         foreach (var (mData, mEntity) in SystemAPI.Query<RefRO<NodeTagCData>>().WithEntityAccess())
         {
             if (mData.ValueRO.Value == "cardsnode")
             {
-                var mSingle = SystemAPI.GetSingleton<PokerSystemSingleton>();
-                mSingle.cardsNode = mEntity;
+                mPokerSystemSingleton.cardsNode = mEntity;
             }
         }
 
+        foreach (var (mData, mEntity) in SystemAPI.Query<RefRO<PokerPoolCData>>().WithEntityAccess())
+        {
+            mPokerSystemSingleton.Prefab = mData.ValueRO.Prefab;
+        }
+
+        Unity.Assertions.Assert.IsTrue(mPokerSystemSingleton.Prefab != Entity.Null, "Prefab == null");
+        Unity.Assertions.Assert.IsTrue(mPokerSystemSingleton.cardsNode != Entity.Null, "cardsNode == null");
+        SystemAPI.SetSingleton(mPokerSystemSingleton);
     }
 }
