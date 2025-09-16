@@ -16,8 +16,10 @@ DOTS 的基础设施：
 
 3：实际ECS 逻辑：空当接龙案例
 (1) OnUpdate  一帧内可能被调度了多次（查询变更、内部触发) 
-(2) 查询某个Data 是否存在, 由于一帧内可能多次触发 OnUpdate, 所以 有可能 某次 OnUpdate 查询结果为 null，如下：
-
+(2) -- 查询某个Data 是否存在, 由于一帧内可能多次触发 OnUpdate, 所以 有可能 某次 OnUpdate 查询结果为 null，
+    -- 烘培的实体和动态创建的实体 加载的时机不一样，这也导致了,Update 的触发时机，有可能是第一帧，也有可能是第三帧。 PokerSystemInitFinishCData 和  PokerPoolCData 分别是 两类不同的实体，他们的加载时机不一样
+    -- 总结 初始化系统的时候，得检查 初始系统状态是否正确。 如下：
+    
     protected override void OnUpdate()
     {
         Debug.Log($"OnUpdate 被调用，Enabled = {Enabled}");
@@ -39,10 +41,15 @@ DOTS 的基础设施：
             nCount++;
         }).Run();
 
+        if(mTarget == Entity.Null) //这里检查 查询/实体 加载就绪状态
+        {
+            return;
+        }
+
         Debug.Log($"找到 PokerPoolCData 的 Entity 数量: {nCount}");
         Unity.Assertions.Assert.IsTrue(mTarget != Entity.Null, "mTarget == null");
 
-       // EntityManager.DestroyEntity(mTempEntity);
+        EntityManager.DestroyEntity(mTempEntity);
         Enabled = false;
     }
     

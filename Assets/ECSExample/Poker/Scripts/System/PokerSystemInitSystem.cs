@@ -1,12 +1,9 @@
-﻿using System.Linq;
-using Unity.Burst;
+﻿using Unity.Burst;
 using Unity.Entities;
-using Unity.Transforms;
 using UnityEngine;
 
 [BurstCompile]
-[RequireMatchingQueriesForUpdate]
-//[UpdateInGroup(typeof(InitializationSystemGroup))] // 在初始化阶段运行
+//[RequireMatchingQueriesForUpdate]
 public partial class PokerSystemInitSystem : SystemBase
 {
     protected override void OnCreate()
@@ -16,109 +13,60 @@ public partial class PokerSystemInitSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        Debug.Log($"OnUpdate 被调用，Enabled = {Enabled}");
-        Enabled = false;
-        //等待某个 Entity（比如配置管理器）带有 InitializationCompleteTag
-        if (!SystemAPI.TryGetSingletonEntity<PokerSystemInitFinishCData>(out Entity mTempEntity))
+        Debug.Log($"PokerSystemInitSystem OnUpdate - Frame: {UnityEngine.Time.frameCount}");
+        //PokerGoMgr 初始化完成后，触发事件, 这个事件
+        if (!SystemAPI.TryGetSingletonEntity<PokerGoMgrInitFinishEvent>(out Entity mTempEntity))
         {
             return;
         }
 
-        int nCount = 0;
-        Entity mTarget = Entity.Null;
-        Entities.ForEach((ref PokerPoolCData PokerPoolObjRef) =>
+        if (InitSingleton())
         {
-            mTarget = PokerPoolObjRef.Prefab;
-            nCount++;
-        }).Run();
-
-        Debug.Log($"找到 PokerPoolCData 的 Entity 数量: {nCount}");
-        Unity.Assertions.Assert.IsTrue(mTarget != Entity.Null, "mTarget == null");
-
-       // EntityManager.DestroyEntity(mTempEntity);
-        Enabled = false;
-
-        ////检查是否已存在单例实体
-        //if (!SystemAPI.TryGetSingletonEntity<PokerSystemSingleton>(out Entity entity))
-        //{
-        //    entity = EntityManager.CreateEntity();
-        //    EntityManager.AddComponent<PokerSystemSingleton>(entity);
-        //}
-
-        //var mPokerSystemSingleton = SystemAPI.GetSingleton<PokerSystemSingleton>();
-        //mPokerSystemSingleton.worldPos_start = PokerGoMgr.Instance.startPt_obj.transform.position;
-        //mPokerSystemSingleton.worldPos_ScreenTopLeft = PokerGoMgr.Instance.TopLeft_obj.transform.position;
-        //mPokerSystemSingleton.worldPos_ScreenBottomRight = PokerGoMgr.Instance.BottomRight_obj.transform.position;
-        //mPokerSystemSingleton.State = PokerGameState.Start;
-
-        //foreach (var (PokerPoolObjRef, entity2) in
-        //    SystemAPI.Query<RefRO<PokerPoolCData>>().WithEntityAccess())
-        //{
-        //    mPokerSystemSingleton.Prefab = PokerPoolObjRef.ValueRO.Prefab;
-        //}
-
-        ////这里就是把一些关键节点 找到对应的实体
-        //foreach (var (mData, mEntity) in SystemAPI.Query<RefRO<NodeTagCData>>().WithEntityAccess())
-        //{
-        //    if (mData.ValueRO.Value == "cardsnode")
-        //    {
-        //        mPokerSystemSingleton.cardsNode = mEntity;
-        //    }
-        //}
-
-        ////var mPokerPoolCData = SystemAPI.GetSingleton<PokerPoolCData>();
-        ////mPokerSystemSingleton.Prefab = mPokerPoolCData.Prefab;
-        //foreach (var (mData, mEntity) in SystemAPI.Query<RefRO<PokerPoolCData>>().WithEntityAccess())
-        //{
-        //    mPokerSystemSingleton.Prefab = mData.ValueRO.Prefab;
-        //}
-
-        //Unity.Assertions.Assert.IsTrue(mPokerSystemSingleton.cardsNode != Entity.Null, "cardsNode == null");
-        //Unity.Assertions.Assert.IsTrue(mPokerSystemSingleton.Prefab != Entity.Null, "Prefab == null");
-        //SystemAPI.SetSingleton(mPokerSystemSingleton);
+            Enabled = false;
+            EntityManager.DestroyEntity(mTempEntity);
+        }
     }
 
-    private void InitSingleton()
+    private bool InitSingleton()
     {
-        //PokerSystemCData mTargetData = default;
-        //foreach (var mData in SystemAPI.Query<RefRO<PokerSystemCData>>())
-        //{
-        //    mTargetData = mData.ValueRO;
-        //}
-
         //检查是否已存在单例实体
-        if (!SystemAPI.TryGetSingletonEntity<PokerSystemSingleton>(out Entity entity))
+        if (!SystemAPI.HasSingleton<PokerSystemSingleton>())
         {
-            entity = EntityManager.CreateEntity();
-            EntityManager.AddComponent<PokerSystemSingleton>(entity);
+            EntityManager.CreateEntity(typeof(PokerSystemSingleton));
         }
 
-        var mPokerSystemSingleton = SystemAPI.GetSingleton<PokerSystemSingleton>();
-        mPokerSystemSingleton.worldPos_start = PokerGoMgr.Instance.startPt_obj.transform.position;
-        mPokerSystemSingleton.worldPos_ScreenTopLeft = PokerGoMgr.Instance.TopLeft_obj.transform.position;
-        mPokerSystemSingleton.worldPos_ScreenBottomRight = PokerGoMgr.Instance.BottomRight_obj.transform.position;
-        mPokerSystemSingleton.State = PokerGameState.Start;
+        var mPokerSystemSingleton = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
+        mPokerSystemSingleton.ValueRW.worldPos_start = PokerGoMgr.Instance.startPt_obj.transform.position;
+        mPokerSystemSingleton.ValueRW.worldPos_ScreenTopLeft = PokerGoMgr.Instance.TopLeft_obj.transform.position;
+        mPokerSystemSingleton.ValueRW.worldPos_ScreenBottomRight = PokerGoMgr.Instance.BottomRight_obj.transform.position;
+        mPokerSystemSingleton.ValueRW.State = PokerGameState.None;
 
-        //这里就是把一些关键节点 找到对应的实体
+        //这里就是把一些关键节点 找到对应的实体，这些都是烘培的实体，到底是第几帧 加载了，不知道
         foreach (var (mData, mEntity) in SystemAPI.Query<RefRO<NodeTagCData>>().WithEntityAccess())
         {
             if (mData.ValueRO.Value == "cardsnode")
             {
-                mPokerSystemSingleton.cardsNode = mEntity;
+                mPokerSystemSingleton.ValueRW.cardsNode = mEntity;
             }
         }
-
-        //var mPokerPoolCData = SystemAPI.GetSingleton<PokerPoolCData>();
-        //mPokerSystemSingleton.Prefab = mPokerPoolCData.Prefab;
-
-
+        
         foreach (var (mData, mEntity) in SystemAPI.Query<RefRO<PokerPoolCData>>().WithEntityAccess())
         {
-            mPokerSystemSingleton.Prefab = mData.ValueRO.Prefab;
+            mPokerSystemSingleton.ValueRW.Prefab = mData.ValueRO.Prefab;
         }
 
-        Unity.Assertions.Assert.IsTrue(mPokerSystemSingleton.cardsNode != Entity.Null, "cardsNode == null");
-        Unity.Assertions.Assert.IsTrue(mPokerSystemSingleton.Prefab != Entity.Null, "Prefab == null");
-        SystemAPI.SetSingleton(mPokerSystemSingleton);
+        //检查是否 查询就绪了, 有可能这个是第一帧，第三帧，到底第几帧 查询状态就绪不知道
+        //这些都是烘培的实体，到底是第几帧 加载了，不知道
+        if (mPokerSystemSingleton.ValueRW.Prefab == Entity.Null || 
+            mPokerSystemSingleton.ValueRW.cardsNode == Entity.Null)
+        {
+            return false;
+        }
+        
+        if (!SystemAPI.HasSingleton<StartDoAniEvent>())
+        {
+            EntityManager.CreateEntity(typeof(StartDoAniEvent));
+        }
+        return true;
     }
 }

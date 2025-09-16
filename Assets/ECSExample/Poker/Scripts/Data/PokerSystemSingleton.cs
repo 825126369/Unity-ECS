@@ -2,13 +2,13 @@ using System;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
-using UnityEngine;
 
 public enum PokerGameState
 {
-    Start = 0,
-    Playing = 1,
-    End = 2,
+    None = 0,
+    Start = 1,
+    Playing = 2,
+    End = 3,
 }
 
 public enum CardType
@@ -19,7 +19,12 @@ public enum CardType
     HeiTao = 4
 }
 
-public struct PokerSystemInitFinishCData : IComponentData
+public struct PokerGoMgrInitFinishEvent : IComponentData
+{
+
+}
+
+public struct StartDoAniEvent : IComponentData
 {
 
 }

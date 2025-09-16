@@ -22,7 +22,7 @@ public partial class EntityPoolManager : SystemBase
     protected override void OnCreate()
     {
         _instance = this;
-        _pools = new NativeHashMap<int, NativeList<Entity>>();
+        _pools = new NativeHashMap<int, NativeList<Entity>>(100, Allocator.Persistent);
     }
 
     protected override void OnDestroy()
