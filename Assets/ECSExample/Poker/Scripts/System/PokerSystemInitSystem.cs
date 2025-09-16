@@ -1,5 +1,8 @@
+using Unity.Burst;
 using Unity.Entities;
 
+[BurstCompile]
+[RequireMatchingQueriesForUpdate]
 [UpdateInGroup(typeof(InitializationSystemGroup))] // 在初始化阶段运行
 public partial class PokerSystemInitSystem : SystemBase
 {
@@ -10,8 +13,15 @@ public partial class PokerSystemInitSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        InitSingleton();
-        Enabled = false;
+        //// 等待某个 Entity（比如配置管理器）带有 InitializationCompleteTag
+        //if (!SystemAPI.TryGetSingletonEntity<PokerSystemInitFinishCData>(out Entity mEntity))
+        //{
+        //    return;
+        //}
+
+        //InitSingleton();
+        //Enabled = false;
+        //EntityManager.DestroyEntity(mEntity);
     }
 
     private void InitSingleton()
@@ -32,9 +42,9 @@ public partial class PokerSystemInitSystem : SystemBase
 
             // 不存在，创建单例实体并添加组件
             var mData = new PokerSystemSingleton();
-            mData.worldPos_start = mTargetData.worldPos_start;
-            mData.worldPos_ScreenTopLeft = mTargetData.worldPos_ScreenTopLeft;
-            mData.worldPos_ScreenBottomRight = mTargetData.worldPos_ScreenBottomRight;
+            mData.worldPos_start = mTargetData.startPt_obj.Value.transform.position;
+            mData.worldPos_ScreenTopLeft = mTargetData.TopLeft_obj.Value.transform.position;
+            mData.worldPos_ScreenBottomRight = mTargetData.BottomRight_obj.Value.transform.position;
             mData.State = PokerGameState.Start;
             SystemAPI.SetSingleton(mData);
         }
