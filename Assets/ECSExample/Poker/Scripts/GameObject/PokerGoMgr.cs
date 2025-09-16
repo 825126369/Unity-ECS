@@ -2,7 +2,7 @@ using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 
-public class PokerGoMgr : MonoBehaviour
+public class PokerGoMgr : SingleTonMonoBehaviour<PokerGoMgr>
 {
     public GameObject startPt_obj;
     public GameObject TopLeft_obj;
@@ -39,10 +39,12 @@ public class PokerGoMgr : MonoBehaviour
     {
         float w = Screen.width;
         float h = Screen.height;
-        Vector3 topLeft = Camera.main.ScreenToWorldPoint(new Vector3(0, Screen.height, 0));
-        Vector3 topRight = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, 0));
-        Vector3 bottomLeft = Camera.main.ScreenToWorldPoint(new Vector3(0, 0, 0));
-        Vector3 bottomRight = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width, 0, 0));
+
+        float depth = -Camera.main.transform.position.z;
+        Vector3 topLeft = Camera.main.ScreenToWorldPoint(new Vector3(0, Screen.height, depth));
+        Vector3 topRight = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, depth));
+        Vector3 bottomLeft = Camera.main.ScreenToWorldPoint(new Vector3(0, 0, depth));
+        Vector3 bottomRight = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width, 0, depth));
 
         TopLeft_obj.transform.position = topLeft;
         TopRight_obj.transform.position = topRight;

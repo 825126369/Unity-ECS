@@ -13,15 +13,15 @@ public partial class PokerSystemInitSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        //// 等待某个 Entity（比如配置管理器）带有 InitializationCompleteTag
-        //if (!SystemAPI.TryGetSingletonEntity<PokerSystemInitFinishCData>(out Entity mEntity))
-        //{
-        //    return;
-        //}
+        // 等待某个 Entity（比如配置管理器）带有 InitializationCompleteTag
+        if (!SystemAPI.TryGetSingletonEntity<PokerSystemInitFinishCData>(out Entity mEntity))
+        {
+            return;
+        }
 
-        //InitSingleton();
-        //Enabled = false;
-        //EntityManager.DestroyEntity(mEntity);
+        InitSingleton();
+        Enabled = false;
+        EntityManager.DestroyEntity(mEntity);
     }
 
     private void InitSingleton()
@@ -42,9 +42,9 @@ public partial class PokerSystemInitSystem : SystemBase
 
             // 不存在，创建单例实体并添加组件
             var mData = new PokerSystemSingleton();
-            mData.worldPos_start = mTargetData.startPt_obj.Value.transform.position;
-            mData.worldPos_ScreenTopLeft = mTargetData.TopLeft_obj.Value.transform.position;
-            mData.worldPos_ScreenBottomRight = mTargetData.BottomRight_obj.Value.transform.position;
+            mData.worldPos_start = PokerGoMgr.Instance.startPt_obj.transform.position;
+            mData.worldPos_ScreenTopLeft = PokerGoMgr.Instance.TopLeft_obj.transform.position;
+            mData.worldPos_ScreenBottomRight = PokerGoMgr.Instance.BottomRight_obj.transform.position;
             mData.State = PokerGameState.Start;
             SystemAPI.SetSingleton(mData);
         }
