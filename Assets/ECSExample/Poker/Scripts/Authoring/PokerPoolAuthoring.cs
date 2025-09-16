@@ -17,9 +17,10 @@ public class PokerPoolAuthoring : MonoBehaviour
                 Prefab = GetEntity(authoring.goPrefab, TransformUsageFlags.Renderable | TransformUsageFlags.WorldSpace),
                 Count = authoring.nPoolCount,
             });
+
+            Debug.Log("PokerPoolAuthoring: ∫Ê≈‡");
         }
     }
-
 }
 
 public struct PokerPoolCData: IComponentData

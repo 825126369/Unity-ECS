@@ -26,11 +26,11 @@ public struct PokerSystemInitFinishCData : IComponentData
 
 public struct PokerSystemCData : IComponentData
 {
-    public UnityObjectRef<GameObject> startPt_obj;
-    public UnityObjectRef<GameObject> TopLeft_obj;
-    public UnityObjectRef<GameObject> TopRight_obj;
-    public UnityObjectRef<GameObject> BottomLeft_obj;
-    public UnityObjectRef<GameObject> BottomRight_obj;
+    //public UnityObjectRef<GameObject> startPt_obj;
+    //public UnityObjectRef<GameObject> TopLeft_obj;
+    //public UnityObjectRef<GameObject> TopRight_obj;
+    //public UnityObjectRef<GameObject> BottomLeft_obj;
+    //public UnityObjectRef<GameObject> BottomRight_obj;
 }
 
 public struct PokerSystemSingleton : IComponentData, IDisposable
@@ -67,21 +67,21 @@ public struct PokerSystemSingleton : IComponentData, IDisposable
     public void Dispose()
     {
         if (bDispose) return; bDispose = true;
-        colors.Dispose();
+        if (colors.IsCreated)
+        {
+            colors.Dispose();
+        }
+        if (colNodes_Dic.IsCreated)
+        {
+            colNodes_Dic.Dispose();
+        }
+        if (allNodes.IsCreated)
+        {
+            allNodes.Dispose();
+        }
+        if (animationEntitys.IsCreated)
+        {
+            animationEntitys.Dispose();
+        }
     }
-
-    public void Init()
-    {
-        //RectTransform tUITransform = GameLauncher.Instance.mUIRoot.mCanvas_Tip;
-        //this.animationSize = new Vector2(tUITransform.rect.width, tUITransform.rect.height);
-
-        //this.maxHeight = this.animationSize.y / 2;
-        //this.minHeight = -this.animationSize.y / 2 + 100;
-        //this.maxWidth = this.animationSize.x / 2 + CardWidth;
-        //this.minWidth = -this.animationSize.x / 2 - CardWidth;
-
-        //this.maxWidth /= GameLauncher.Instance.mUIRoot.mCanvas_WinAnimation.localScale.x;
-        //this.minWidth /= GameLauncher.Instance.mUIRoot.mCanvas_WinAnimation.localScale.x;
-    }
-
 }

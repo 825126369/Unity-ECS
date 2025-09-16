@@ -1,9 +1,12 @@
+ï»¿using System.Linq;
 using Unity.Burst;
 using Unity.Entities;
+using Unity.Transforms;
+using UnityEngine;
 
 [BurstCompile]
 [RequireMatchingQueriesForUpdate]
-[UpdateInGroup(typeof(InitializationSystemGroup))] // ÔÚ³õÊ¼»¯½×¶ÎÔËĞĞ
+//[UpdateInGroup(typeof(InitializationSystemGroup))] // åœ¨åˆå§‹åŒ–é˜¶æ®µè¿è¡Œ
 public partial class PokerSystemInitSystem : SystemBase
 {
     protected override void OnCreate()
@@ -13,15 +16,66 @@ public partial class PokerSystemInitSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        // µÈ´ıÄ³¸ö Entity£¨±ÈÈçÅäÖÃ¹ÜÀíÆ÷£©´øÓĞ InitializationCompleteTag
-        if (!SystemAPI.TryGetSingletonEntity<PokerSystemInitFinishCData>(out Entity mEntity))
+        Debug.Log($"OnUpdate è¢«è°ƒç”¨ï¼ŒEnabled = {Enabled}");
+        Enabled = false;
+        //ç­‰å¾…æŸä¸ª Entityï¼ˆæ¯”å¦‚é…ç½®ç®¡ç†å™¨ï¼‰å¸¦æœ‰ InitializationCompleteTag
+        if (!SystemAPI.TryGetSingletonEntity<PokerSystemInitFinishCData>(out Entity mTempEntity))
         {
             return;
         }
 
-        InitSingleton();
+        int nCount = 0;
+        Entity mTarget = Entity.Null;
+        Entities.ForEach((ref PokerPoolCData PokerPoolObjRef) =>
+        {
+            mTarget = PokerPoolObjRef.Prefab;
+            nCount++;
+        }).Run();
+
+        Debug.Log($"æ‰¾åˆ° PokerPoolCData çš„ Entity æ•°é‡: {nCount}");
+        Unity.Assertions.Assert.IsTrue(mTarget != Entity.Null, "mTarget == null");
+
+       // EntityManager.DestroyEntity(mTempEntity);
         Enabled = false;
-        EntityManager.DestroyEntity(mEntity);
+
+        ////æ£€æŸ¥æ˜¯å¦å·²å­˜åœ¨å•ä¾‹å®ä½“
+        //if (!SystemAPI.TryGetSingletonEntity<PokerSystemSingleton>(out Entity entity))
+        //{
+        //    entity = EntityManager.CreateEntity();
+        //    EntityManager.AddComponent<PokerSystemSingleton>(entity);
+        //}
+
+        //var mPokerSystemSingleton = SystemAPI.GetSingleton<PokerSystemSingleton>();
+        //mPokerSystemSingleton.worldPos_start = PokerGoMgr.Instance.startPt_obj.transform.position;
+        //mPokerSystemSingleton.worldPos_ScreenTopLeft = PokerGoMgr.Instance.TopLeft_obj.transform.position;
+        //mPokerSystemSingleton.worldPos_ScreenBottomRight = PokerGoMgr.Instance.BottomRight_obj.transform.position;
+        //mPokerSystemSingleton.State = PokerGameState.Start;
+
+        //foreach (var (PokerPoolObjRef, entity2) in
+        //    SystemAPI.Query<RefRO<PokerPoolCData>>().WithEntityAccess())
+        //{
+        //    mPokerSystemSingleton.Prefab = PokerPoolObjRef.ValueRO.Prefab;
+        //}
+
+        ////è¿™é‡Œå°±æ˜¯æŠŠä¸€äº›å…³é”®èŠ‚ç‚¹ æ‰¾åˆ°å¯¹åº”çš„å®ä½“
+        //foreach (var (mData, mEntity) in SystemAPI.Query<RefRO<NodeTagCData>>().WithEntityAccess())
+        //{
+        //    if (mData.ValueRO.Value == "cardsnode")
+        //    {
+        //        mPokerSystemSingleton.cardsNode = mEntity;
+        //    }
+        //}
+
+        ////var mPokerPoolCData = SystemAPI.GetSingleton<PokerPoolCData>();
+        ////mPokerSystemSingleton.Prefab = mPokerPoolCData.Prefab;
+        //foreach (var (mData, mEntity) in SystemAPI.Query<RefRO<PokerPoolCData>>().WithEntityAccess())
+        //{
+        //    mPokerSystemSingleton.Prefab = mData.ValueRO.Prefab;
+        //}
+
+        //Unity.Assertions.Assert.IsTrue(mPokerSystemSingleton.cardsNode != Entity.Null, "cardsNode == null");
+        //Unity.Assertions.Assert.IsTrue(mPokerSystemSingleton.Prefab != Entity.Null, "Prefab == null");
+        //SystemAPI.SetSingleton(mPokerSystemSingleton);
     }
 
     private void InitSingleton()
@@ -32,7 +86,7 @@ public partial class PokerSystemInitSystem : SystemBase
         //    mTargetData = mData.ValueRO;
         //}
 
-        //¼ì²éÊÇ·ñÒÑ´æÔÚµ¥ÀıÊµÌå
+        //æ£€æŸ¥æ˜¯å¦å·²å­˜åœ¨å•ä¾‹å®ä½“
         if (!SystemAPI.TryGetSingletonEntity<PokerSystemSingleton>(out Entity entity))
         {
             entity = EntityManager.CreateEntity();
@@ -45,7 +99,7 @@ public partial class PokerSystemInitSystem : SystemBase
         mPokerSystemSingleton.worldPos_ScreenBottomRight = PokerGoMgr.Instance.BottomRight_obj.transform.position;
         mPokerSystemSingleton.State = PokerGameState.Start;
 
-        //ÕâÀï¾ÍÊÇ°ÑÒ»Ğ©¹Ø¼ü½Úµã ÕÒµ½¶ÔÓ¦µÄÊµÌå
+        //è¿™é‡Œå°±æ˜¯æŠŠä¸€äº›å…³é”®èŠ‚ç‚¹ æ‰¾åˆ°å¯¹åº”çš„å®ä½“
         foreach (var (mData, mEntity) in SystemAPI.Query<RefRO<NodeTagCData>>().WithEntityAccess())
         {
             if (mData.ValueRO.Value == "cardsnode")
@@ -54,13 +108,17 @@ public partial class PokerSystemInitSystem : SystemBase
             }
         }
 
+        //var mPokerPoolCData = SystemAPI.GetSingleton<PokerPoolCData>();
+        //mPokerSystemSingleton.Prefab = mPokerPoolCData.Prefab;
+
+
         foreach (var (mData, mEntity) in SystemAPI.Query<RefRO<PokerPoolCData>>().WithEntityAccess())
         {
             mPokerSystemSingleton.Prefab = mData.ValueRO.Prefab;
         }
 
-        Unity.Assertions.Assert.IsTrue(mPokerSystemSingleton.Prefab != Entity.Null, "Prefab == null");
         Unity.Assertions.Assert.IsTrue(mPokerSystemSingleton.cardsNode != Entity.Null, "cardsNode == null");
+        Unity.Assertions.Assert.IsTrue(mPokerSystemSingleton.Prefab != Entity.Null, "Prefab == null");
         SystemAPI.SetSingleton(mPokerSystemSingleton);
     }
 }

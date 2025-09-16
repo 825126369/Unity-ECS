@@ -15,8 +15,7 @@ public class PokerGoMgr : SingleTonMonoBehaviour<PokerGoMgr>
         Debug.Log("Start");
         GetScreenCornersWorldPoints();
         EntityManager mEntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-        Entity QueryEntity = mEntityManager.CreateEntity();
-        mEntityManager.AddComponent<PokerSystemInitFinishCData>(QueryEntity);
+        Entity QueryEntity = mEntityManager.CreateEntity(typeof(PokerSystemInitFinishCData));
     }
 
     private Entity FindMyEntity()

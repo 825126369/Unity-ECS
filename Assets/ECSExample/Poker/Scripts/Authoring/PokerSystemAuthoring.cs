@@ -9,7 +9,9 @@ public class PokerSystemAuthoring : MonoBehaviour
         public override void Bake(PokerSystemAuthoring authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-            AddComponent<PokerSystemSingleton>(entity);
+
+            //NativeList 在 PokerSystemSingleton 中，这里会报错
+            //AddComponent<PokerSystemSingleton>(entity);
         }
     }
 }
