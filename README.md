@@ -23,7 +23,7 @@ DOTS 的基础设施：
     {
         Debug.Log($"OnUpdate 被调用，Enabled = {Enabled}");
         Debug.Log($"PokerSystemInitSystem OnUpdate - Frame: {UnityEngine.Time.frameCount}");
-        
+
         //等待 信号完成，执行后面的
         //这个代码块 会导致 下面的组件 在前几次调用 OnUpdate 时，返回 null, 但这帧最后一次调用OnUpdate 时， 还是找到了
         //把这个代码块注释掉， 下面的组件 第一次就能找到
@@ -56,6 +56,11 @@ DOTS 的基础设施：
 (3) 结构性变更: 触发条件: 增删任何Entity, 增删任何 IComponentData.
 如果发生 结构性变更（Structural Change）会导致你缓存的任何IComponentData全部失效！无论你访问的是哪个组件、哪个 Entity！  
 
-(4) Data 如果包含 NativeList 等相关集合，不能用于GameObject烘培, 能否用于 单例（SystemAPI.SetSingleton）还待观察。
+
+(4)
+LocalToWorld.Position	世界坐标（World Space）	从局部 → 世界变换后的最终位置
+LocalTransform.Position	局部坐标（Local Space）	相对于父节点的位置（若无父节点，则等同世界坐标）
+
+(5) Data 如果包含 NativeList 等相关集合，不能用于GameObject烘培, 能否用于 单例（SystemAPI.SetSingleton）还待观察。
 
 如果你看到物体没渲染出来， 不管是编辑模式，还是运行模式，都是前两步出错导致
