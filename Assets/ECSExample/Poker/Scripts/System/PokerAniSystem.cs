@@ -46,7 +46,6 @@ public partial class PokerAniSystem : SystemBase
         else if (mInstance.ValueRO.State == PokerGameState.Start)
         {
             Debug.Log($"PokerAniSystem OnUpdate - Frame: {UnityEngine.Time.frameCount}");
-
             NativeArray<int> colors = new NativeArray<int>(4, Allocator.Persistent);
             colors[0] = 0;
             colors[1] = 1;
@@ -57,7 +56,7 @@ public partial class PokerAniSystem : SystemBase
         }
         else if (mInstance.ValueRO.State == PokerGameState.Playing)
         {
-            foreach (var v in mInstance.ValueRO.animationEntitys)
+            foreach (var v in mInstance.ValueRW.animationEntitys)
             {
                 this.updateAnimation(mInstance, v, deltaTime);
             }
@@ -166,16 +165,21 @@ public partial class PokerAniSystem : SystemBase
         }
 
         Unity.Assertions.Assert.IsTrue(mInstance.ValueRO.Prefab != Entity.Null, "mInstance.Prefab == Entity.Null");
-        Entity startNode = EntityPoolManager.Instance.Spawn(mInstance.ValueRO.Prefab, PoolTagConst.Poker);
-        LocalTransform mLocalTransform = EntityManager.GetComponentData<LocalTransform>(startNode);
-        PokerAnimationCData mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData>(mTargetEntity);
-        PokerItemCData mPokerItemCData = EntityManager.GetComponentData<PokerItemCData>(mTargetEntity);
+        mTargetEntity = EntityPoolManager.Instance.Spawn(mInstance.ValueRO.Prefab, PoolTagConst.Poker);
+        EntityManager.AddComponentData(mTargetEntity, new PokerItemCData());
+        EntityManager.AddComponentData(mTargetEntity, new PokerAnimationCData());
+        EntityManager.AddComponentData(mTargetEntity, new Parent());
 
-        EntityManager.AddComponentData(startNode, new Parent { Value = mInstance.ValueRO.cardsNode });
-        mLocalTransform.Position = pt;
-        nodeArrs.Add(startNode);
+        var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mTargetEntity);
+        var mPokerItemCData = EntityManager.GetComponentData<PokerItemCData>(mTargetEntity);
+        var mParent = SystemAPI.GetComponentRW<Parent>(mTargetEntity);
+
+       // mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
+        mLocalTransform.ValueRW.Position = pt;
         mPokerItemCData.initByNum(value, colorType);
-        return startNode;
+
+        nodeArrs.Add(mTargetEntity);
+        return mTargetEntity;
     }
 
     void updateAnimation(RefRW<PokerSystemSingleton> mInstance, Entity mEntity, float dt)
@@ -201,7 +205,6 @@ public partial class PokerAniSystem : SystemBase
             var toRight = mPokerAnimationCData.btoRight;
             var vx_a = mPokerAnimationCData.vx_a;
             var vy_a = mPokerAnimationCData.vy_a;
-
             var nowPt = new Vector3(0, 0, 0);
             // 匀变速直线运动位移公式：a=dv/dt，
             // 距离 x = v0t+1/2·at^2
@@ -299,7 +302,7 @@ public partial class PokerAniSystem : SystemBase
         {
             var mEntity = mInstance.ValueRO.animationEntitys[index];
             PokerAnimationCData mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData>(mEntity);
-            mPokerAnimationCData.open = false;
+            mPokerAnimationCData.Reset();
         }
         mInstance.ValueRO.animationEntitys.Clear();
 

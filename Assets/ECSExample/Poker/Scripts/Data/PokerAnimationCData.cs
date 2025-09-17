@@ -1,7 +1,8 @@
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
-public struct PokerItemCData : IComponentData
+public class PokerItemCData : IComponentData
 {
     //public SpriteRenderer n_card = null;
     //public SpriteRenderer n_back = null;
@@ -62,8 +63,8 @@ public class PokerAnimationCData : IComponentData
     public bool btoRight;
     public float deltTime;
     public float checktimes; //每两帧，检查一次位置。
-    public Vector3 startPt;  //最开始的起始点。
-    public Vector3 nowPt;
+    public float3 startPt;  //最开始的起始点。
+    public float3 nowPt;
     public float vx;    // x方向的速度
     public float vy;    // y方向的速度  
     public float vyMax; // y方向的最大速度

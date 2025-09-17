@@ -3,7 +3,7 @@ using Unity.Entities;
 using UnityEngine;
 
 [BurstCompile]
-//[RequireMatchingQueriesForUpdate]
+[RequireMatchingQueriesForUpdate]
 public partial class PokerSystemInitSystem : SystemBase
 {
     protected override void OnCreate()
@@ -39,6 +39,11 @@ public partial class PokerSystemInitSystem : SystemBase
         mPokerSystemSingleton.ValueRW.worldPos_start = PokerGoMgr.Instance.startPt_obj.transform.position;
         mPokerSystemSingleton.ValueRW.worldPos_ScreenTopLeft = PokerGoMgr.Instance.TopLeft_obj.transform.position;
         mPokerSystemSingleton.ValueRW.worldPos_ScreenBottomRight = PokerGoMgr.Instance.BottomRight_obj.transform.position;
+        mPokerSystemSingleton.ValueRW.maxHeight = PokerGoMgr.Instance.TopLeft_obj.transform.position.y;
+        mPokerSystemSingleton.ValueRW.minHeight = PokerGoMgr.Instance.BottomRight_obj.transform.position.y;
+        mPokerSystemSingleton.ValueRW.maxWidth = PokerGoMgr.Instance.BottomRight_obj.transform.position.x;
+        mPokerSystemSingleton.ValueRW.minWidth = PokerGoMgr.Instance.TopLeft_obj.transform.position.x;
+
         mPokerSystemSingleton.ValueRW.State = PokerGameState.None;
 
         //这里就是把一些关键节点 找到对应的实体，这些都是烘培的实体，到底是第几帧 加载了，不知道

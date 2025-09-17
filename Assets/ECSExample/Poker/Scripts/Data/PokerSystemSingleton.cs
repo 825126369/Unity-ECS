@@ -44,6 +44,11 @@ public struct PokerSystemSingleton : IComponentData, IDisposable
     public float3 worldPos_ScreenTopLeft;
     public float3 worldPos_ScreenBottomRight;
     public PokerGameState State;
+    public float maxHeight;
+    public float minHeight;
+    public float maxWidth;
+    public float minWidth;
+    public bool animationOver;
 
     // Card Êý¾Ý
     public const float CardWidth = 103;
@@ -54,13 +59,6 @@ public struct PokerSystemSingleton : IComponentData, IDisposable
 
     public Entity Prefab;
     public Entity cardsNode;
-    
-    public float2 animationSize;
-    public float maxHeight;
-    public float minHeight;
-    public float maxWidth;
-    public float minWidth;
-    public bool animationOver;
 
     public NativeHashMap<int, NativeList<Entity>> colNodes_Dic;
     public NativeList<Entity> allNodes;

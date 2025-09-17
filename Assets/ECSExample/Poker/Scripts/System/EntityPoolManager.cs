@@ -91,27 +91,10 @@ public partial class EntityPoolManager : SystemBase
 
         if (EntityManager.HasComponent<LocalTransform>(entity))
         {
-            var lt = EntityManager.GetComponentData<LocalTransform>(entity);
-            lt.Position = float3.zero;
-            lt.Rotation = quaternion.identity;
-            lt.Scale = 1.0f;
-            EntityManager.SetComponentData(entity, lt);
+            var lt = SystemAPI.GetComponentRW<LocalTransform>(entity);
+            lt.ValueRW.Position = float3.zero;
+            lt.ValueRW.Rotation = quaternion.identity;
+            lt.ValueRW.Scale = 1.0f;
         }
-
-        if (EntityManager.HasComponent<PokerAnimationCData>(entity))
-        {
-            var lt = EntityManager.GetComponentData<PokerAnimationCData>(entity);
-            lt.Reset();
-        }
-
-        //if (EntityManager.HasComponent<AttackComponent>(entity))
-        //{
-        //    EntityManager.RemoveComponent<AttackComponent>(entity);
-        //}
-
-        //if (EntityManager.HasComponent<PlayAudioRequest>(entity))
-        //{
-        //    EntityManager.RemoveComponent<PlayAudioRequest>(entity);
-        //}
     }
 }
