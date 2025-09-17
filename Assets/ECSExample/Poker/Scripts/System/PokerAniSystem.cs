@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -58,9 +59,11 @@ public partial class PokerAniSystem : SystemBase
         }
         else if (mInstance.ValueRO.State == PokerGameState.Playing)
         {
-            foreach (var v in mInstance.ValueRW.animationEntitys)
+            var animationEntitys = mInstance.ValueRW.animationEntitys;
+            for (int i = 0; i < animationEntitys.Length; i++)
             {
-                this.updateAnimation(mInstance, v, deltaTime);
+                Entity mEntity = animationEntitys[i];
+                this.updateAnimation(mInstance, mEntity, deltaTime);
             }
         }
         else if (mInstance.ValueRO.State == PokerGameState.End)
