@@ -40,7 +40,7 @@ public struct PokerSystemCData : IComponentData
 
 public struct PokerSystemSingleton : IComponentData, IDisposable
 {
-    public float3 worldPos_start;
+    public NativeArray<float3> worldPos_start_list;
     public float3 worldPos_ScreenTopLeft;
     public float3 worldPos_ScreenBottomRight;
     public PokerGameState State;

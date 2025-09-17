@@ -4,7 +4,11 @@ using UnityEngine;
 
 public class PokerGoMgr : SingleTonMonoBehaviour<PokerGoMgr>
 {
-    public GameObject startPt_obj;
+    public GameObject startPt_obj1;
+    public GameObject startPt_obj2;
+    public GameObject startPt_obj3;
+    public GameObject startPt_obj4;
+
     public GameObject TopLeft_obj;
     public GameObject TopRight_obj;
     public GameObject BottomLeft_obj;

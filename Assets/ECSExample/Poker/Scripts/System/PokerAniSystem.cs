@@ -52,19 +52,19 @@ public partial class PokerAniSystem : SystemBase
             colors[1] = 1;
             colors[2] = 2;
             colors[3] = 3;
-            Show(colors, mInstance.ValueRO.worldPos_start, 0, null);
+            Show(colors, null);
 
             mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
             mInstance.ValueRW.State = PokerGameState.Playing;
         }
         else if (mInstance.ValueRO.State == PokerGameState.Playing)
         {
-            var animationEntitys = mInstance.ValueRW.animationEntitys;
-            for (int i = 0; i < animationEntitys.Length; i++)
-            {
-                Entity mEntity = animationEntitys[i];
-                this.updateAnimation(mInstance, mEntity, deltaTime);
-            }
+            //var animationEntitys = mInstance.ValueRW.animationEntitys;
+            //for (int i = 0; i < animationEntitys.Length; i++)
+            //{
+            //    Entity mEntity = animationEntitys[i];
+            //    this.updateAnimation(mInstance, mEntity, deltaTime);
+            //}
         }
         else if (mInstance.ValueRO.State == PokerGameState.End)
         {
@@ -72,7 +72,7 @@ public partial class PokerAniSystem : SystemBase
         }
     }
 
-    public void Show(NativeArray<int> colors, float3 startPt_w, int offsetX, Action callback)
+    public void Show(NativeArray<int> colors, Action callback)
     {
         RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
         mInstance.ValueRW.animationOver = false;
@@ -81,14 +81,14 @@ public partial class PokerAniSystem : SystemBase
         mInstance.ValueRW.animationEntitys = new NativeList<Entity>(54, Allocator.Persistent);
         mInstance.ValueRW.colors = colors;
         //mInstance.callBack = callback;
-
-        float3 firstPt_l = mInstance.ValueRO.worldPos_start;
+            
         float delay = 0.1f;
-        for (int i = 0; i < colors.Length; i++)
+        int offsetX = 0;
+        for (int i = 0; i < 4; i++)
         {
             int color = colors[i];
             int offset = offsetX * i;
-            Vector3 frompt = new Vector3(firstPt_l.x + i * (PokerSystemSingleton.CardWidth - 1) + offset, firstPt_l.y, firstPt_l.z);
+            Vector3 frompt = mInstance.ValueRO.worldPos_start_list[i];
             delay = i * 0.5f;
             float delayvalue = 0;
             float delayoffset = 0.1f;
@@ -183,7 +183,7 @@ public partial class PokerAniSystem : SystemBase
         var mParent = SystemAPI.GetComponentRW<Parent>(mTargetEntity);
 
         mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-        mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
+        //mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
         mLocalTransform.ValueRW.Position = pt;
         mPokerItemCData.initByNum(value, colorType);
 
@@ -194,7 +194,7 @@ public partial class PokerAniSystem : SystemBase
     void updateAnimation(RefRW<PokerSystemSingleton> mInstance, Entity mEntity, float dt)
     {
         PokerAnimationCData mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData>(mEntity);
-        LocalTransform mLocalTransform = EntityManager.GetComponentData<LocalTransform>(mEntity);
+        var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mEntity);
         if (!mPokerAnimationCData.open)
         {
             return;
@@ -258,13 +258,13 @@ public partial class PokerAniSystem : SystemBase
 
             // 每两帧之间 添加
             mPokerAnimationCData.checktimes += 1;
-            mLocalTransform.Position = nowPt;
+            mLocalTransform.ValueRW.Position = nowPt;
             mPokerAnimationCData.nowPt = nowPt;
 
             // 碰到边界，不在产生新的额
             if (mPokerAnimationCData.open)
             {
-                mLocalTransform.Position = nowPt;
+                mLocalTransform.ValueRW.Position = nowPt;
                 if (willRemove)
                 {
                     mPokerAnimationCData.open = false;

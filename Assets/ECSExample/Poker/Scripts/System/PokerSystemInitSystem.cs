@@ -1,5 +1,7 @@
 ﻿using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 [BurstCompile]
@@ -36,7 +38,13 @@ public partial class PokerSystemInitSystem : SystemBase
         }
 
         var mPokerSystemSingleton = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-        mPokerSystemSingleton.ValueRW.worldPos_start = PokerGoMgr.Instance.startPt_obj.transform.position;
+        mPokerSystemSingleton.ValueRW.worldPos_start_list = new NativeArray<float3>(4, Allocator.Persistent);
+
+        mPokerSystemSingleton.ValueRW.worldPos_start_list[0] = PokerGoMgr.Instance.startPt_obj1.transform.position;
+        mPokerSystemSingleton.ValueRW.worldPos_start_list[1] = PokerGoMgr.Instance.startPt_obj2.transform.position;
+        mPokerSystemSingleton.ValueRW.worldPos_start_list[2] = PokerGoMgr.Instance.startPt_obj3.transform.position;
+        mPokerSystemSingleton.ValueRW.worldPos_start_list[3] = PokerGoMgr.Instance.startPt_obj4.transform.position;
+
         mPokerSystemSingleton.ValueRW.worldPos_ScreenTopLeft = PokerGoMgr.Instance.TopLeft_obj.transform.position;
         mPokerSystemSingleton.ValueRW.worldPos_ScreenBottomRight = PokerGoMgr.Instance.BottomRight_obj.transform.position;
         mPokerSystemSingleton.ValueRW.maxHeight = PokerGoMgr.Instance.TopLeft_obj.transform.position.y;
