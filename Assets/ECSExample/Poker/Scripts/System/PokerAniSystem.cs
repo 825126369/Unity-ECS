@@ -51,7 +51,9 @@ public partial class PokerAniSystem : SystemBase
             colors[1] = 1;
             colors[2] = 2;
             colors[3] = 3;
-            Show(mInstance, colors, mInstance.ValueRO.worldPos_start, 0, null);
+            Show(colors, mInstance.ValueRO.worldPos_start, 0, null);
+
+            mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
             mInstance.ValueRW.State = PokerGameState.Playing;
         }
         else if (mInstance.ValueRO.State == PokerGameState.Playing)
@@ -67,8 +69,9 @@ public partial class PokerAniSystem : SystemBase
         }
     }
 
-    public void Show(RefRW<PokerSystemSingleton> mInstance, NativeArray<int> colors, float3 startPt_w, int offsetX, Action callback)
+    public void Show(NativeArray<int> colors, float3 startPt_w, int offsetX, Action callback)
     {
+        RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
         mInstance.ValueRW.animationOver = false;
         mInstance.ValueRW.colNodes_Dic = new NativeHashMap<int, NativeList<Entity>>(54, Allocator.Persistent);
         mInstance.ValueRW.allNodes = new NativeList<Entity>(54, Allocator.Persistent);
@@ -88,16 +91,17 @@ public partial class PokerAniSystem : SystemBase
             float delayoffset = 0.1f;
             for (int j = 13; j > 0; j--)
             {
-                this.showAnimation_Default_ColValue(mInstance, i, frompt, delay + delayvalue, color, j, offsetX);
+                this.showAnimation_Default_ColValue(i, frompt, delay + delayvalue, color, j, offsetX);
                 delayvalue += delayoffset;
             }
         }
     }
 
-    void showAnimation_Default_ColValue(RefRW<PokerSystemSingleton> mInstance, int colindex, Vector3 pt, float delay, int color, int value, int offsetX = 0)
+    void showAnimation_Default_ColValue(int colindex, Vector3 pt, float delay, int color, int value, int offsetX = 0)
     {
-        Entity mEntity = this.addStaticCard(mInstance, pt, color, value, colindex);
+        Entity mEntity = this.addStaticCard(pt, color, value, colindex);
 
+        RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
         PokerAnimationCData mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData>(mEntity);
         mPokerAnimationCData.Init(colindex, color, value);
         mPokerAnimationCData.open = true;
@@ -124,8 +128,9 @@ public partial class PokerAniSystem : SystemBase
     }
 
     // 检查是否最后一个队列中的最后一个，标志动画结束。   
-    Entity addStaticCard(RefRW<PokerSystemSingleton> mInstance, float3 pt, int colorType, int value, int colindex)
+    Entity addStaticCard(float3 pt, int colorType, int value, int colindex)
     {
+        RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
         int nodekey = PokerAnimationCData.getCardId(colorType, value);
         if (!mInstance.ValueRO.colNodes_Dic.TryGetValue(nodekey, out NativeList<Entity> nodeArrs))
         {
@@ -158,7 +163,7 @@ public partial class PokerAniSystem : SystemBase
                 if (mPokerAnimationCData2.color == mInstance.ValueRO.colors[mInstance.ValueRO.colors.Length - 1] && mPokerAnimationCData2.value == 1)
                 {
                     this.onAnimatinCallBack();
-                    this.DoDestroyAction(mInstance);
+                    this.DoDestroyAction();
                 }
             }
             return Entity.Null;
@@ -174,7 +179,8 @@ public partial class PokerAniSystem : SystemBase
         var mPokerItemCData = EntityManager.GetComponentData<PokerItemCData>(mTargetEntity);
         var mParent = SystemAPI.GetComponentRW<Parent>(mTargetEntity);
 
-       // mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
+        mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
+        mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
         mLocalTransform.ValueRW.Position = pt;
         mPokerItemCData.initByNum(value, colorType);
 
@@ -262,7 +268,7 @@ public partial class PokerAniSystem : SystemBase
                     if (mPokerAnimationCData.value == 6 && mPokerAnimationCData.index == 2)
                     {
                         this.onAnimatinCallBack();
-                        this.DoDestroyAction(mInstance);
+                        this.DoDestroyAction();
                     }
                     return;
                 }
@@ -290,8 +296,9 @@ public partial class PokerAniSystem : SystemBase
         //}
     }
 
-    public void DoDestroyAction(RefRW<PokerSystemSingleton> mInstance)
+    public void DoDestroyAction()
     {
+        RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
         if (mInstance.ValueRO.animationOver)
         {
             return;
@@ -310,6 +317,9 @@ public partial class PokerAniSystem : SystemBase
         {
             EntityPoolManager.Instance.Recycle(v);
         }
+
+        //上面回收的时候，有组件增删行为，发生结构性更改
+        mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
         mInstance.ValueRO.allNodes.Clear();
     }
 
