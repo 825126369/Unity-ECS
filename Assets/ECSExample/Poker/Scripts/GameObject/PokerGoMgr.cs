@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class PokerGoMgr : SingleTonMonoBehaviour<PokerGoMgr>
 {
+    public Canvas mCanvas;
     public GameObject startPt_obj1;
     public GameObject startPt_obj2;
     public GameObject startPt_obj3;
@@ -44,7 +45,7 @@ public class PokerGoMgr : SingleTonMonoBehaviour<PokerGoMgr>
         float w = Screen.width;
         float h = Screen.height;
 
-        float depth = -Camera.main.transform.position.z;
+        float depth = mCanvas.planeDistance;
         Vector3 topLeft = Camera.main.ScreenToWorldPoint(new Vector3(0, Screen.height, depth));
         Vector3 topRight = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, depth));
         Vector3 bottomLeft = Camera.main.ScreenToWorldPoint(new Vector3(0, 0, depth));
