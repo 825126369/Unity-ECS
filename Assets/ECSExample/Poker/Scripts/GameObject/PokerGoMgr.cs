@@ -1,6 +1,7 @@
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PokerGoMgr : SingleTonMonoBehaviour<PokerGoMgr>
 {

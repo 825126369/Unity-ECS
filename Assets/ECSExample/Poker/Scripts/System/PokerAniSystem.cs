@@ -59,12 +59,12 @@ public partial class PokerAniSystem : SystemBase
         }
         else if (mInstance.ValueRO.State == PokerGameState.Playing)
         {
-            //var animationEntitys = mInstance.ValueRW.animationEntitys;
-            //for (int i = 0; i < animationEntitys.Length; i++)
-            //{
-            //    Entity mEntity = animationEntitys[i];
-            //    this.updateAnimation(mInstance, mEntity, deltaTime);
-            //}
+            var animationEntitys = mInstance.ValueRW.animationEntitys;
+            for (int i = 0; i < animationEntitys.Length; i++)
+            {
+                Entity mEntity = animationEntitys[i];
+                this.updateAnimation(mInstance, mEntity, deltaTime);
+            }
         }
         else if (mInstance.ValueRO.State == PokerGameState.End)
         {
@@ -88,6 +88,7 @@ public partial class PokerAniSystem : SystemBase
         {
             int color = colors[i];
             int offset = offsetX * i;
+            mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
             Vector3 frompt = mInstance.ValueRO.worldPos_start_list[i];
             delay = i * 0.5f;
             float delayvalue = 0;
@@ -183,8 +184,9 @@ public partial class PokerAniSystem : SystemBase
         var mParent = SystemAPI.GetComponentRW<Parent>(mTargetEntity);
 
         mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-        //mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
+        mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
         mLocalTransform.ValueRW.Position = pt;
+        mLocalTransform.ValueRW.Scale = mInstance.ValueRW.worldScale_start_list[colindex].x;
         mPokerItemCData.initByNum(value, colorType);
 
         nodeArrs.Add(mTargetEntity);
