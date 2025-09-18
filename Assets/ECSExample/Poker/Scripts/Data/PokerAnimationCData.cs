@@ -70,10 +70,15 @@ public class PokerAnimationCData : IComponentData
     public float vyMax; // y方向的最大速度
     public float vx_a;  // x方向的加速度 x轴匀速
     public float vy_a;  // y方向的加速度
-    public float maxHeight;   //每次更新最高值。
-    
+
+    public float maxHeight;
+    public float minHeight;
+    public float maxWidth;
+    public float minWidth;
+
     public void Reset()
     {
+        mEntity = Entity.Null;
         index = 0; //第几个col的
         value = 13;
         cardid = 1;  //13*v+value cardid
@@ -93,7 +98,6 @@ public class PokerAnimationCData : IComponentData
         vyMax = 0; // y方向的最大速度
         vx_a = 0;  // x方向的加速度 x轴匀速
         vy_a = 0;  // y方向的加速度
-        //firstNode = null!;
         maxHeight = 0;   //每次更新最高值。
     }
 
@@ -120,12 +124,12 @@ public class PokerAnimationCData : IComponentData
 
     public static float randomVy()
     {
-        return UnityEngine.Random.Range(500, 600);
+        return UnityEngine.Random.Range(300, 500);
     }
 
     public static float randomVy_a()
     {
-        return UnityEngine.Random.Range(5500, 6200) * (-1);
+        return UnityEngine.Random.Range(4000, 5000) * -1;
     }
 
     public static int getCardId(int color, int value)

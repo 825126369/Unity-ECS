@@ -63,7 +63,7 @@ public partial class PokerAniSystem : SystemBase
             for (int i = 0; i < animationEntitys.Length; i++)
             {
                 Entity mEntity = animationEntitys[i];
-                this.updateAnimation(mInstance, mEntity, deltaTime);
+                this.updateAnimation(mEntity, deltaTime);
             }
         }
         else if (mInstance.ValueRO.State == PokerGameState.End)
@@ -115,7 +115,12 @@ public partial class PokerAniSystem : SystemBase
         mPokerAnimationCData.startPt = pt;
         mPokerAnimationCData.nowPt = pt;
         mPokerAnimationCData.mEntity = mEntity;
+
+        mPokerAnimationCData.minHeight = mInstance.ValueRO.minHeight;
         mPokerAnimationCData.maxHeight = mInstance.ValueRO.maxHeight;
+        mPokerAnimationCData.minWidth = mInstance.ValueRO.minWidth;
+        mPokerAnimationCData.maxWidth = mInstance.ValueRO.maxWidth;
+
         mPokerAnimationCData.vx = PokerAnimationCData.randomVx();
         mPokerAnimationCData.vx_a = 0;
         mPokerAnimationCData.vy = PokerAnimationCData.randomVy();
@@ -193,7 +198,7 @@ public partial class PokerAniSystem : SystemBase
         return mTargetEntity;
     }
 
-    void updateAnimation(RefRW<PokerSystemSingleton> mInstance, Entity mEntity, float dt)
+    void updateAnimation(Entity mEntity, float dt)
     {
         PokerAnimationCData mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData>(mEntity);
         var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mEntity);
@@ -231,9 +236,9 @@ public partial class PokerAniSystem : SystemBase
             nowPt.z = startPt.z;
 
             // 垂直. 小于最低值。
-            if (nowPt.y < mInstance.ValueRO.minHeight)
+            if (nowPt.y < mPokerAnimationCData.minHeight)
             {
-                nowPt.y = mInstance.ValueRO.minHeight;
+                nowPt.y = mPokerAnimationCData.minHeight;
                 mPokerAnimationCData.vy *= -0.95f;  //转变方向
             }
 
@@ -245,15 +250,15 @@ public partial class PokerAniSystem : SystemBase
             }
 
             bool willRemove = false;
-            if (nowPt.x < mInstance.ValueRO.minWidth - PokerSystemSingleton.CardWidth)
+            if (nowPt.x < mPokerAnimationCData.minWidth - PokerSystemSingleton.CardWidth)
             {
-                nowPt.x = mInstance.ValueRO.minWidth;
+                nowPt.x = mPokerAnimationCData.minWidth;
                 willRemove = true;
             }
 
-            if (nowPt.x > mInstance.ValueRO.maxWidth + PokerSystemSingleton.CardWidth)
+            if (nowPt.x > mPokerAnimationCData.maxWidth + PokerSystemSingleton.CardWidth)
             {
-                nowPt.x = mInstance.ValueRO.maxWidth;
+                nowPt.x = mPokerAnimationCData.maxWidth;
                 mPokerAnimationCData.vx *= -1;
                 willRemove = true;
             }
