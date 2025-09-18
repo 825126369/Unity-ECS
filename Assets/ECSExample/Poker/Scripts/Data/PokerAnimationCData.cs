@@ -1,56 +1,48 @@
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.U2D;
 
-public class PokerItemCData : IComponentData
+public struct PokerItemCData : IComponentData
 {
-    //public SpriteRenderer n_card = null;
-    //public SpriteRenderer n_back = null;
-    //public GameObject n_root = null;
-    //public CardType cardHuase = CardType.FangPian;
-    //public int cardDianshu = 0;
-    //public int nCardId = 0;
+    public UnityObjectRef<GameObject> n_root;
+    public UnityObjectRef<SpriteRenderer> n_card;
+    public UnityObjectRef<SpriteRenderer> n_back;
+    public int nCardId;
 
     public void initByNum(int cardNum, int colorType)
     {
-        //this.cardDianshu = cardNum;
-        //this.cardHuase = colorType;
-        //this.nCardId = ((int)this.cardHuase - 1) * 13 + this.cardDianshu;
+        this.nCardId = (int)colorType * 13 + cardNum;
 
-        ////刷新花色点数ui
-        //Image sp_ = this.n_card;
-        //int id = DataCenter.Instance.sysConfig.themeZhengId;
-        //string path = "cards" + id;
-        //SpriteAtlas atl_game = ResCenter.Instance.mBundleGameAllRes.GetAtlas(path);
+        //刷新花色点数ui
+        SpriteAtlas atl_game = PokerGoMgr.Instance.mPokerAtlas;
 
-        //string p_name = "di_" + this.cardDianshu + "_" + (int)this.cardHuase;
-        //Sprite spri_bg = atl_game.GetSprite(p_name);
-        //PrintTool.Assert(spri_bg != null, p_name);
-        //sp_.sprite = spri_bg;
+        string p_name = "di_" + cardNum + "_" + colorType;
+        Sprite spri_bg = atl_game.GetSprite(p_name);
+        n_card.Value.sprite = spri_bg;
 
-        //SpriteAtlas atl_game1 = ResCenter.Instance.mBundleGameAllRes.GetAtlas(AtlasNames.Lobby_Game_Cards_Cardback);
-        //Image sp_back = this.n_back;
-        //string p_name_back = "cardback_" + DataCenter.Instance.sysConfig.themeBackId;
-        //Sprite spri_bg_back = atl_game1.GetSprite(p_name_back);
-        //sp_back.sprite = spri_bg_back;
+        SpriteAtlas atl_game1 = PokerGoMgr.Instance.mPokerBackAtlas;
+        string p_name_back = "cardback_1";
+        Sprite spri_bg_back = atl_game1.GetSprite(p_name_back);
+        n_back.Value.sprite = spri_bg_back;
 
-        //this.onSetNormal();
+        this.onSetNormal();
     }
 
     void onSetBack()
     {
-        //this.n_card.gameObject.SetActive(false);
-        //this.n_back.gameObject.SetActive(true);
+        this.n_card.Value.gameObject.SetActive(false);
+        this.n_back.Value.gameObject.SetActive(true);
     }
 
     void onSetNormal()
     {
-        //this.n_back.gameObject.SetActive(false);
-        //this.n_card.gameObject.SetActive(true);
+        this.n_back.Value.gameObject.SetActive(false);
+        this.n_card.Value.gameObject.SetActive(true);
     }
 }
 
-public class PokerAnimationCData : IComponentData
+public struct PokerAnimationCData : IComponentData
 {
     public Entity mEntity;
     public int index;

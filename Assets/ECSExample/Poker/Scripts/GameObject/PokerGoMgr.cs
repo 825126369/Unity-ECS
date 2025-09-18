@@ -1,10 +1,13 @@
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.U2D;
 
 public class PokerGoMgr : SingleTonMonoBehaviour<PokerGoMgr>
 {
+    public SpriteAtlas mPokerAtlas;
+    public SpriteAtlas mPokerBackAtlas;
+
     public Canvas mCanvas;
     public GameObject startPt_obj1;
     public GameObject startPt_obj2;

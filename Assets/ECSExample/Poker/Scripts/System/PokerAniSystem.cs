@@ -48,10 +48,10 @@ public partial class PokerAniSystem : SystemBase
         {
             Debug.Log($"PokerAniSystem OnUpdate - Frame: {UnityEngine.Time.frameCount}");
             NativeArray<int> colors = new NativeArray<int>(4, Allocator.Persistent);
-            colors[0] = 0;
-            colors[1] = 1;
-            colors[2] = 2;
-            colors[3] = 3;
+            colors[0] = 1;
+            colors[1] = 2;
+            colors[2] = 3;
+            colors[3] = 4;
             Show(colors, null);
 
             mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
@@ -105,33 +105,33 @@ public partial class PokerAniSystem : SystemBase
     {
         Entity mEntity = this.addStaticCard(pt, color, value, colindex);
 
-        RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-        PokerAnimationCData mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData>(mEntity);
-        mPokerAnimationCData.Init(colindex, color, value);
-        mPokerAnimationCData.open = true;
-        mPokerAnimationCData.trigger = false;
-        mPokerAnimationCData.triggerDelay = delay;
-        mPokerAnimationCData.btoRight = PokerAnimationCData.toRight(colindex);
-        mPokerAnimationCData.startPt = pt;
-        mPokerAnimationCData.nowPt = pt;
-        mPokerAnimationCData.mEntity = mEntity;
+        var mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
+        var mPokerAnimationCData = SystemAPI.GetComponentRW<PokerAnimationCData>(mEntity);
+        mPokerAnimationCData.ValueRW.Init(colindex, color, value);
+        mPokerAnimationCData.ValueRW.open = true;
+        mPokerAnimationCData.ValueRW.trigger = false;
+        mPokerAnimationCData.ValueRW.triggerDelay = delay;
+        mPokerAnimationCData.ValueRW.btoRight = PokerAnimationCData.toRight(colindex);
+        mPokerAnimationCData.ValueRW.startPt = pt;
+        mPokerAnimationCData.ValueRW.nowPt = pt;
+        mPokerAnimationCData.ValueRW.mEntity = mEntity;
 
-        mPokerAnimationCData.minHeight = mInstance.ValueRO.minHeight;
-        mPokerAnimationCData.maxHeight = mInstance.ValueRO.maxHeight;
-        mPokerAnimationCData.minWidth = mInstance.ValueRO.minWidth;
-        mPokerAnimationCData.maxWidth = mInstance.ValueRO.maxWidth;
+        mPokerAnimationCData.ValueRW.minHeight = mInstance.ValueRO.minHeight;
+        mPokerAnimationCData.ValueRW.maxHeight = mInstance.ValueRO.maxHeight;
+        mPokerAnimationCData.ValueRW.minWidth = mInstance.ValueRO.minWidth;
+        mPokerAnimationCData.ValueRW.maxWidth = mInstance.ValueRO.maxWidth;
 
-        mPokerAnimationCData.vx = PokerAnimationCData.randomVx();
-        mPokerAnimationCData.vx_a = 0;
-        mPokerAnimationCData.vy = PokerAnimationCData.randomVy();
+        mPokerAnimationCData.ValueRW.vx = PokerAnimationCData.randomVx();
+        mPokerAnimationCData.ValueRW.vx_a = 0;
+        mPokerAnimationCData.ValueRW.vy = PokerAnimationCData.randomVy();
 
-        if (!mPokerAnimationCData.btoRight)
+        if (!mPokerAnimationCData.ValueRW.btoRight)
         {
-            mPokerAnimationCData.vx *= -1;
+            mPokerAnimationCData.ValueRW.vx *= -1;
         }
 
-        mPokerAnimationCData.vy_a = PokerAnimationCData.randomVy_a();
-        mPokerAnimationCData.deltTime = 0;
+        mPokerAnimationCData.ValueRW.vy_a = PokerAnimationCData.randomVy_a();
+        mPokerAnimationCData.ValueRW.deltTime = 0;
         mInstance.ValueRO.animationEntitys.Add(mEntity);
         mInstance.ValueRO.allNodes.Add(mEntity);
     }
@@ -185,14 +185,14 @@ public partial class PokerAniSystem : SystemBase
         EntityManager.AddComponentData(mTargetEntity, new Parent());
 
         var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mTargetEntity);
-        var mPokerItemCData = EntityManager.GetComponentData<PokerItemCData>(mTargetEntity);
+        var mPokerItemCData = SystemAPI.GetComponentRW<PokerItemCData>(mTargetEntity);
         var mParent = SystemAPI.GetComponentRW<Parent>(mTargetEntity);
 
         mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
         mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
         mLocalTransform.ValueRW.Position = pt;
         mLocalTransform.ValueRW.Scale = mInstance.ValueRW.worldScale_start_list[colindex].x;
-        mPokerItemCData.initByNum(value, colorType);
+        mPokerItemCData.ValueRW.initByNum(value, colorType);
 
         nodeArrs.Add(mTargetEntity);
         return mTargetEntity;
@@ -200,14 +200,14 @@ public partial class PokerAniSystem : SystemBase
 
     void updateAnimation(Entity mEntity, float dt)
     {
-        PokerAnimationCData mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData>(mEntity);
+        var mPokerAnimationCData = SystemAPI.GetComponentRW<PokerAnimationCData>(mEntity);
         var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mEntity);
-        if (!mPokerAnimationCData.open)
+        if (!mPokerAnimationCData.ValueRW.open)
         {
             return;
         }
 
-        if (mPokerAnimationCData.trigger)
+        if (mPokerAnimationCData.ValueRW.trigger)
         {
             // 没有节点的时候，不更新。
             if (mEntity == Entity.Null)
@@ -215,67 +215,67 @@ public partial class PokerAniSystem : SystemBase
                 return;
             }
 
-            var deltTime = mPokerAnimationCData.deltTime;
-            var startPt = mPokerAnimationCData.nowPt;
-            var maxHeight = mPokerAnimationCData.maxHeight;
-            var toRight = mPokerAnimationCData.btoRight;
-            var vx_a = mPokerAnimationCData.vx_a;
-            var vy_a = mPokerAnimationCData.vy_a;
+            var deltTime = mPokerAnimationCData.ValueRW.deltTime;
+            var startPt = mPokerAnimationCData.ValueRW.nowPt;
+            var maxHeight = mPokerAnimationCData.ValueRW.maxHeight;
+            var toRight = mPokerAnimationCData.ValueRW.btoRight;
+            var vx_a = mPokerAnimationCData.ValueRW.vx_a;
+            var vy_a = mPokerAnimationCData.ValueRW.vy_a;
             var nowPt = new Vector3(0, 0, 0);
             // 匀变速直线运动位移公式：a=dv/dt，
             // 距离 x = v0t+1/2·at^2
 
             // 现在速度
-            mPokerAnimationCData.vx += vx_a * dt;
-            mPokerAnimationCData.vy += vy_a * dt;
-            var vx = mPokerAnimationCData.vx;
-            var vy = mPokerAnimationCData.vy;
+            mPokerAnimationCData.ValueRW.vx += vx_a * dt;
+            mPokerAnimationCData.ValueRW.vy += vy_a * dt;
+            var vx = mPokerAnimationCData.ValueRW.vx;
+            var vy = mPokerAnimationCData.ValueRW.vy;
 
             nowPt.x = (float)(startPt.x + vx * dt + 0.5f * vx_a * dt * dt);
             nowPt.y = (float)(startPt.y + vy * dt + 0.5f * vy_a * dt * dt);
             nowPt.z = startPt.z;
 
             // 垂直. 小于最低值。
-            if (nowPt.y < mPokerAnimationCData.minHeight)
+            if (nowPt.y < mPokerAnimationCData.ValueRW.minHeight)
             {
-                nowPt.y = mPokerAnimationCData.minHeight;
-                mPokerAnimationCData.vy *= -0.95f;  //转变方向
+                nowPt.y = mPokerAnimationCData.ValueRW.minHeight;
+                mPokerAnimationCData.ValueRW.vy *= -0.95f;  //转变方向
             }
 
-            if (nowPt.y > mPokerAnimationCData.maxHeight)
+            if (nowPt.y > mPokerAnimationCData.ValueRW.maxHeight)
             {
-                nowPt.y = mPokerAnimationCData.maxHeight;
-                mPokerAnimationCData.vy = 0;
-                mPokerAnimationCData.maxHeight = mPokerAnimationCData.maxHeight * 0.8f;
+                nowPt.y = mPokerAnimationCData.ValueRW.maxHeight;
+                mPokerAnimationCData.ValueRW.vy = 0;
+                mPokerAnimationCData.ValueRW.maxHeight = mPokerAnimationCData.ValueRW.maxHeight * 0.8f;
             }
 
             bool willRemove = false;
-            if (nowPt.x < mPokerAnimationCData.minWidth - PokerSystemSingleton.CardWidth)
+            if (nowPt.x < mPokerAnimationCData.ValueRW.minWidth - PokerSystemSingleton.CardWidth)
             {
-                nowPt.x = mPokerAnimationCData.minWidth;
+                nowPt.x = mPokerAnimationCData.ValueRW.minWidth;
                 willRemove = true;
             }
 
-            if (nowPt.x > mPokerAnimationCData.maxWidth + PokerSystemSingleton.CardWidth)
+            if (nowPt.x > mPokerAnimationCData.ValueRW.maxWidth + PokerSystemSingleton.CardWidth)
             {
-                nowPt.x = mPokerAnimationCData.maxWidth;
-                mPokerAnimationCData.vx *= -1;
+                nowPt.x = mPokerAnimationCData.ValueRW.maxWidth;
+                mPokerAnimationCData.ValueRW.vx *= -1;
                 willRemove = true;
             }
 
             // 每两帧之间 添加
-            mPokerAnimationCData.checktimes += 1;
+            mPokerAnimationCData.ValueRW.checktimes += 1;
             mLocalTransform.ValueRW.Position = nowPt;
-            mPokerAnimationCData.nowPt = nowPt;
+            mPokerAnimationCData.ValueRW.nowPt = nowPt;
 
             // 碰到边界，不在产生新的额
-            if (mPokerAnimationCData.open)
+            if (mPokerAnimationCData.ValueRW.open)
             {
                 mLocalTransform.ValueRW.Position = nowPt;
                 if (willRemove)
                 {
-                    mPokerAnimationCData.open = false;
-                    if (mPokerAnimationCData.value == 6 && mPokerAnimationCData.index == 2)
+                    mPokerAnimationCData.ValueRW.open = false;
+                    if (mPokerAnimationCData.ValueRW.value == 6 && mPokerAnimationCData.ValueRW.index == 2)
                     {
                         this.onAnimatinCallBack();
                         this.DoDestroyAction();
@@ -286,10 +286,10 @@ public partial class PokerAniSystem : SystemBase
         }
         else
         {
-            mPokerAnimationCData.triggerDelay -= dt;
-            if (mPokerAnimationCData.triggerDelay <= 0)
+            mPokerAnimationCData.ValueRW.triggerDelay -= dt;
+            if (mPokerAnimationCData.ValueRW.triggerDelay <= 0)
             {
-                mPokerAnimationCData.trigger = true;
+                mPokerAnimationCData.ValueRW.trigger = true;
             }
         }
     }
