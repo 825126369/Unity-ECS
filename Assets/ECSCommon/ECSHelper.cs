@@ -1,17 +1,27 @@
-using Unity.Mathematics;
-using Unity.Transforms;
+using Unity.Entities;
+using UnityEngine;
 
 public static class ECSHelper
 {
-    //将世界坐标转换为相对于给定 LocalToWorld 的局部坐标
-    public static float3 WorldToLocal(this LocalToWorld parentLtw, float3 worldPosition)
+    public static Entity FindChildEntityByName(EntityManager em, Entity rootEntity, string targetName)
     {
-        return math.transform(math.inverse(parentLtw.Value), worldPosition);
-    }
+        if (!em.HasBuffer<LinkedEntityGroup>(rootEntity))
+        {
+            Debug.LogWarning("实体没有 LinkedEntityGroup，可能不是从 Prefab 实例化或未正确转换。");
+            return Entity.Null;
+        }
 
-    //将局部坐标转换为相对于给定 LocalToWorld 的世界坐标
-    public static float3 LocalToWorld(this LocalToWorld parentLtw, float3 localPosition)
-    {
-        return math.transform(parentLtw.Value, localPosition);
+        var buffer = em.GetBuffer<LinkedEntityGroup>(rootEntity);
+        foreach (var linkedEntity in buffer)
+        {
+            Entity child = linkedEntity.Value;
+            if (em.HasComponent<GameObjectCData>(child) && em.GetComponentData<GameObjectCData>(child).Name == targetName)
+            {
+                return child;
+            }
+        }
+
+        Debug.LogWarning($"未找到名字为 \"{targetName}\" 的子实体。");
+        return Entity.Null;
     }
 }

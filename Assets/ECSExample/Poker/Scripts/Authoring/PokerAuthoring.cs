@@ -12,14 +12,12 @@ public class PokerAuthoring : MonoBehaviour
     {
         public override void Bake(PokerAuthoring authoring)
         {
+            //ECS_Authoring_Helper.AddCData(this, authoring.gameObject);
+            //ECS_Authoring_Helper.AddCData<SpriteRenderer, SpriteRendererCData>(this, authoring.gameObject);
+
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent<PokerAnimationCData>(entity);
-
-            PokerItemCData mItem = new PokerItemCData();
-            mItem.n_root = authoring.root;
-            mItem.n_card = authoring.Poker;
-            mItem.n_back = authoring.Back;
-            AddComponent(entity, mItem);
+            AddComponent<PokerItemCData>(entity);
         }
     }
 }

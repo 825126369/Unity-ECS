@@ -1,11 +1,13 @@
 using System;
 using System.Linq;
+using System.Xml.Linq;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.U2D;
 
 [RequireMatchingQueriesForUpdate]
 [BurstCompile]
@@ -70,6 +72,53 @@ public partial class PokerAniSystem : SystemBase
         {
             // UnityMainThreadDispatcher.Instance.Enqueue(new MainThreadData_End());
         }
+
+        foreach (var (mSpriteRenderer, mSpriteRendererCData) in SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<UnityEngine.SpriteRenderer>, SpriteRendererCData>())
+        {
+            SpriteAtlas mSpriteAtlas = PokerGoMgr.Instance.mPokerAtlas;
+            Sprite spri_bg = mSpriteAtlas.GetSprite(mSpriteRendererCData.spriteName.ToString());
+            //n_card.Value.sprite = spri_bg;
+            mSpriteRenderer.Value.sprite = spri_bg;
+        }
+    }
+
+    public void initByNum(Entity mEntity_PokerItem, int cardNum, int colorType)
+    {
+        var mData = SystemAPI.GetComponentRW<PokerItemCData>(mEntity_PokerItem);
+        mData.ValueRW.color = colorType;
+        mData.ValueRW.cardNum = cardNum;
+        mData.ValueRW.nCardId = colorType * 13 + cardNum;
+
+        //刷新花色点数ui
+        SpriteAtlas atl_game = PokerGoMgr.Instance.mPokerAtlas;
+        string p_name = "di_" + cardNum + "_" + colorType;
+        Sprite spri_bg = atl_game.GetSprite(p_name);
+        //n_card.Value.sprite = spri_bg;
+
+        SpriteAtlas atl_game1 = PokerGoMgr.Instance.mPokerBackAtlas;
+        string p_name_back = "cardback_1";
+        Sprite spri_bg_back = atl_game1.GetSprite(p_name_back);
+        //n_back.Value.sprite = spri_bg_back;
+
+        var mEntity_Poker = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Sprite");
+        var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
+        var n_card_cdata = SystemAPI.GetComponentRW<SpriteRendererCData>(mEntity_Poker);
+        var n_back_cdata = SystemAPI.GetComponentRW<SpriteRendererCData>(mEntity_Back);
+        n_card_cdata.ValueRW.spriteName = p_name;
+        n_back_cdata.ValueRW.spriteName = p_name_back;
+        this.onSetNormal(mData);
+    }
+
+    void onSetBack(RefRW<PokerItemCData> mData)
+    {
+        //mData.n_card.Value.gameObject.SetActive(false);
+        //mData.n_back.Value.gameObject.SetActive(true);
+    }
+
+    void onSetNormal(RefRW<PokerItemCData> mData)
+    {
+        //mData.n_back.Value.gameObject.SetActive(false);
+        //mData.n_card.Value.gameObject.SetActive(true);
     }
 
     public void Show(NativeArray<int> colors, Action callback)
@@ -192,7 +241,7 @@ public partial class PokerAniSystem : SystemBase
         mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
         mLocalTransform.ValueRW.Position = pt;
         mLocalTransform.ValueRW.Scale = mInstance.ValueRW.worldScale_start_list[colindex].x;
-        mPokerItemCData.ValueRW.initByNum(value, colorType);
+        initByNum(mTargetEntity, value, colorType);
 
         nodeArrs.Add(mTargetEntity);
         return mTargetEntity;

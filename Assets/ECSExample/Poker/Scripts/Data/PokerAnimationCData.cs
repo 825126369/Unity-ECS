@@ -1,45 +1,12 @@
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.U2D;
 
 public struct PokerItemCData : IComponentData
 {
-    public UnityObjectRef<GameObject> n_root;
-    public UnityObjectRef<SpriteRenderer> n_card;
-    public UnityObjectRef<SpriteRenderer> n_back;
+    public int color;
+    public int cardNum;
     public int nCardId;
-
-    public void initByNum(int cardNum, int colorType)
-    {
-        this.nCardId = (int)colorType * 13 + cardNum;
-
-        //刷新花色点数ui
-        SpriteAtlas atl_game = PokerGoMgr.Instance.mPokerAtlas;
-
-        string p_name = "di_" + cardNum + "_" + colorType;
-        Sprite spri_bg = atl_game.GetSprite(p_name);
-        n_card.Value.sprite = spri_bg;
-
-        SpriteAtlas atl_game1 = PokerGoMgr.Instance.mPokerBackAtlas;
-        string p_name_back = "cardback_1";
-        Sprite spri_bg_back = atl_game1.GetSprite(p_name_back);
-        n_back.Value.sprite = spri_bg_back;
-
-        this.onSetNormal();
-    }
-
-    void onSetBack()
-    {
-        this.n_card.Value.gameObject.SetActive(false);
-        this.n_back.Value.gameObject.SetActive(true);
-    }
-
-    void onSetNormal()
-    {
-        this.n_back.Value.gameObject.SetActive(false);
-        this.n_card.Value.gameObject.SetActive(true);
-    }
 }
 
 public struct PokerAnimationCData : IComponentData
