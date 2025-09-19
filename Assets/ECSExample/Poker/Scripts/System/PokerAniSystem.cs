@@ -45,6 +45,14 @@ public partial class PokerAniSystem : SystemBase
                 mInstance.ValueRW.State = PokerGameState.Start;
                 break;
             }
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (!SystemAPI.HasSingleton<StartDoAniEvent>())
+                {
+                    EntityManager.CreateEntity(typeof(StartDoAniEvent));
+                }
+            }
         }
         else if (mInstance.ValueRO.State == PokerGameState.Start)
         {
@@ -70,14 +78,14 @@ public partial class PokerAniSystem : SystemBase
         }
         else if (mInstance.ValueRO.State == PokerGameState.End)
         {
-            // UnityMainThreadDispatcher.Instance.Enqueue(new MainThreadData_End());
+            mInstance.ValueRW.State = PokerGameState.None;
+            UnityMainThreadDispatcher.Instance.Enqueue(new MainThreadData_End());
         }
 
         foreach (var (mSpriteRenderer, mSpriteRendererCData) in SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<UnityEngine.SpriteRenderer>, RefRO<SpriteRendererCData>>())
         {
             SpriteAtlas mSpriteAtlas = PokerGoMgr.Instance.mPokerAtlas;
             Sprite spri_bg = mSpriteAtlas.GetSprite(mSpriteRendererCData.ValueRO.spriteName.ToString());
-            //n_card.Value.sprite = spri_bg;
             mSpriteRenderer.Value.sprite = spri_bg;
             mSpriteRenderer.Value.sortingOrder = mSpriteRendererCData.ValueRO.nOrderId;
         }
@@ -108,7 +116,7 @@ public partial class PokerAniSystem : SystemBase
         n_card_cdata.ValueRW.spriteName = p_name;
         n_back_cdata.ValueRW.spriteName = p_name_back;
         n_card_cdata.ValueRW.nOrderId = cardNum;
-        this.onSetNormal(mData);
+        this.onSetNormal(mEntity_PokerItem);
     }
 
     public void UpdatePokerSortingOrderInFly(Entity mEntity_PokerItem)
@@ -121,17 +129,16 @@ public partial class PokerAniSystem : SystemBase
         var n_back_cdata = SystemAPI.GetComponentRW<SpriteRendererCData>(mEntity_Back);
         n_card_cdata.ValueRW.nOrderId = mData.ValueRO.cardNum + 100;
         n_back_cdata.ValueRW.nOrderId = mData.ValueRO.cardNum + 100;
-        this.onSetNormal(mData);
+        this.onSetNormal(mEntity_PokerItem);
     }
-
-
-    void onSetBack(RefRW<PokerItemCData> mData)
+    
+    void onSetBack(Entity mEntity_PokerItem)
     {
         //mData.n_card.Value.gameObject.SetActive(false);
         //mData.n_back.Value.gameObject.SetActive(true);
     }
 
-    void onSetNormal(RefRW<PokerItemCData> mData)
+    void onSetNormal(Entity mEntity_PokerItem)
     {
         //mData.n_back.Value.gameObject.SetActive(false);
         //mData.n_card.Value.gameObject.SetActive(true);

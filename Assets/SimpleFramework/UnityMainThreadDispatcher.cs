@@ -1,34 +1,30 @@
 using System;
-using System.Collections.Concurrent; // 使用 ConcurrentQueue 更高效
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
+using static System.Collections.Specialized.BitVector32;
 
 /// <summary>
 /// 单例 MonoBehaviour，用于在主线程执行从其他线程提交的 Action。
 /// </summary>
-public class UnityMainThreadDispatcher : MonoBehaviour
+public class UnityMainThreadDispatcher : SingleTonMonoBehaviour<UnityMainThreadDispatcher>
 {
-    public static UnityMainThreadDispatcher Instance { get; private set; }
-    private readonly ConcurrentQueue<Action> _actionQueue = new ConcurrentQueue<Action>();
-    private int _queuedActionsCount = 0;
-
-    private void Awake()
+    private readonly Dictionary<int, List<InnerListener>> listenerDic = new Dictionary<int, List<InnerListener>>();
+    private readonly ConcurrentQueue<InnerEvent> mInnerEventQueue = new ConcurrentQueue<InnerEvent>();
+    public struct InnerListener
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        Instance = this;
-        DontDestroyOnLoad(gameObject); // 防止场景切换时被销毁
-        Debug.Log("UnityMainThreadDispatcher initialized.");
+        public bool once;
+        public Action<object> mFunc;
     }
 
-    /// <summary>
-    /// 从任何线程调用此方法，将一个 Action 加入队列，等待在主线程执行。
-    /// </summary>
-    /// <param name="action">要在主线程执行的委托</param>
-    public void Enqueue(Action action)
+    public struct InnerEvent
+    {
+        public int nId;
+        public object mData;
+    }
+
+    public void AddListener(int nId, Action<object> action, bool once = false)
     {
         if (action == null)
         {
@@ -36,13 +32,57 @@ public class UnityMainThreadDispatcher : MonoBehaviour
             return;
         }
 
-        _actionQueue.Enqueue(action);
-        _queuedActionsCount++; // 用于调试，非必需
+        InnerListener mInnerListener = new InnerListener();
+        mInnerListener.mFunc = action;
+        mInnerListener.once = once;
+
+        lock (listenerDic)
+        {
+            List<InnerListener> mList = null;
+            if (!listenerDic.TryGetValue(nId, out mList))
+            {
+                mList = new List<InnerListener>();
+                listenerDic.Add(nId, mList);
+            }
+            mList.Add(mInnerListener);
+        }
+    }
+
+    public void RemoveListener(int nId, Action<object> mFunc)
+    {
+        if (mFunc == null)
+        {
+            Debug.LogWarning("Attempted to enqueue a null action.");
+            return;
+        }
+
+        lock (listenerDic)
+        {
+            List<InnerListener> mList = null;
+            if (listenerDic.TryGetValue(nId, out mList))
+            {
+                var l = mList.Count;
+                for (int i = l - 1; i >= 0; i--)
+                {
+                    if (mList[i].mFunc == mFunc)
+                    {
+                        mList.RemoveAt(i);
+                    }
+                }
+            }
+        }
+    }
+    
+    public void Fire(int nId, object args = null)
+    {
+        InnerEvent mInnerListener = new InnerEvent();
+        mInnerListener.nId = nId;
+        mInnerListener.mData = args;
+        mInnerEventQueue.Enqueue(mInnerListener);
     }
 
     private void Update()
     {
-        // 在主线程的 Update 中，处理队列中的所有 Action
         int processedCount = 0;
         while (_actionQueue.TryDequeue(out Action action))
         {
@@ -56,22 +96,18 @@ public class UnityMainThreadDispatcher : MonoBehaviour
             }
             processedCount++;
         }
-
-        // 可选：调试日志
+        
         if (processedCount > 0)
         {
             _queuedActionsCount -= processedCount;
-            // Debug.Log($"Processed {processedCount} actions. {_queuedActionsCount} remaining.");
         }
     }
-
-    // 可选：提供一个清理方法（通常不需要，因为队列会自动清空）
+    
     public void Clear()
     {
         while (_actionQueue.TryDequeue(out _)) { }
         _queuedActionsCount = 0;
     }
-
-    // 可选：检查队列是否为空
+    
     public bool IsEmpty => _actionQueue.IsEmpty;
 }
