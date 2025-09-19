@@ -78,17 +78,17 @@ public partial class EntityPoolManager : SystemBase
             _pools[poolId] = pool;
         }
 
+        if (!EntityManager.HasComponent<Disabled>(entity))
+        {
+            EntityManager.AddComponent<Disabled>(entity);
+        }
+
         ResetEntity(entity);
         pool.Add(entity);
     }
 
     private void ResetEntity(Entity entity)
     {
-        if (!EntityManager.HasComponent<Disabled>(entity))
-        {
-            EntityManager.AddComponent<Disabled>(entity);
-        }
-
         if (EntityManager.HasComponent<LocalTransform>(entity))
         {
             var lt = SystemAPI.GetComponentRW<LocalTransform>(entity);

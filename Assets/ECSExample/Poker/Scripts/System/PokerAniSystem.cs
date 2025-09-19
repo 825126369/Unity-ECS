@@ -148,7 +148,6 @@ public partial class PokerAniSystem : SystemBase
         mInstance.ValueRW.allNodes = new NativeList<Entity>(54, Allocator.Persistent);
         mInstance.ValueRW.animationEntitys = new NativeList<Entity>(54, Allocator.Persistent);
         mInstance.ValueRW.colors = colors;
-        //mInstance.callBack = callback;
             
         float delay = 0.1f;
         int offsetX = 0;
@@ -393,7 +392,6 @@ public partial class PokerAniSystem : SystemBase
             PokerAnimationCData mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData>(mEntity);
             mPokerAnimationCData.Reset();
         }
-        mInstance.ValueRO.animationEntitys.Clear();
 
         foreach (var v in mInstance.ValueRO.allNodes)
         {
@@ -403,6 +401,9 @@ public partial class PokerAniSystem : SystemBase
         //上面回收的时候，有组件增删行为，发生结构性更改
         mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
         mInstance.ValueRO.allNodes.Clear();
+        mInstance.ValueRO.colNodes_Dic.Clear();
+        mInstance.ValueRO.animationEntitys.Clear();
+        mInstance.ValueRO.colors.Dispose();
     }
 
     public void onClick_Skip()
