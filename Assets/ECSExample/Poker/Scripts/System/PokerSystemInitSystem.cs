@@ -80,11 +80,6 @@ public partial class PokerSystemInitSystem : SystemBase
         {
             return false;
         }
-        
-        if (!SystemAPI.HasSingleton<StartDoAniEvent>())
-        {
-            EntityManager.CreateEntity(typeof(StartDoAniEvent));
-        }
         return true;
     }
 }

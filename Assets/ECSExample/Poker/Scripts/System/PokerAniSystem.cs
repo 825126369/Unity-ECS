@@ -13,9 +13,11 @@ using UnityEngine.U2D;
 [BurstCompile]
 public partial class PokerAniSystem : SystemBase
 {
+    private EntityQuery StartDoAniEventQuery;
     protected override void OnCreate()
     {
         base.OnCreate();
+        StartDoAniEventQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<StartDoAniEvent>().Build(this);
     }
 
     protected override void OnDestroy()
@@ -46,13 +48,7 @@ public partial class PokerAniSystem : SystemBase
                 break;
             }
 
-            if (Input.GetMouseButtonDown(0))
-            {
-                if (!SystemAPI.HasSingleton<StartDoAniEvent>())
-                {
-                    EntityManager.CreateEntity(typeof(StartDoAniEvent));
-                }
-            }
+            EntityManager.DestroyEntity(StartDoAniEventQuery);
         }
         else if (mInstance.ValueRO.State == PokerGameState.Start)
         {
@@ -79,7 +75,7 @@ public partial class PokerAniSystem : SystemBase
         else if (mInstance.ValueRO.State == PokerGameState.End)
         {
             mInstance.ValueRW.State = PokerGameState.None;
-            UnityMainThreadDispatcher.Instance.Enqueue(new MainThreadData_End());
+            UnityMainThreadDispatcher.Instance.Fire(PokerECSEvent.PokerAniFinish);
         }
 
         foreach (var (mSpriteRenderer, mSpriteRendererCData) in SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<UnityEngine.SpriteRenderer>, RefRO<SpriteRendererCData>>())
@@ -349,8 +345,10 @@ public partial class PokerAniSystem : SystemBase
                     mPokerAnimationCData.ValueRW.open = false;
                     if (mPokerAnimationCData.ValueRW.value == 6 && mPokerAnimationCData.ValueRW.index == 2)
                     {
-                        this.onAnimatinCallBack();
                         this.DoDestroyAction();
+
+                        RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
+                        mInstance.ValueRW.State = PokerGameState.End;
                     }
                     return;
                 }

@@ -2,8 +2,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
-using static System.Collections.Specialized.BitVector32;
 
 /// <summary>
 /// 单例 MonoBehaviour，用于在主线程执行从其他线程提交的 Action。
@@ -22,6 +20,11 @@ public class UnityMainThreadDispatcher : SingleTonMonoBehaviour<UnityMainThreadD
     {
         public int nId;
         public object mData;
+    }
+
+    public void Init()
+    {
+        
     }
 
     public void AddListener(int nId, Action<object> action, bool once = false)
@@ -83,31 +86,22 @@ public class UnityMainThreadDispatcher : SingleTonMonoBehaviour<UnityMainThreadD
 
     private void Update()
     {
-        int processedCount = 0;
-        while (_actionQueue.TryDequeue(out Action action))
+        while (mInnerEventQueue.TryDequeue(out InnerEvent mEvent))
         {
-            try
+            List<InnerListener> mList = null;
+            if (listenerDic.TryGetValue(mEvent.nId, out mList))
             {
-                action.Invoke(); // 执行委托
+                int l = mList.Count;
+                for (int i = l - 1; i >= 0; i--)
+                {
+                    InnerListener ml = mList[i];
+                    ml.mFunc(mEvent.mData);
+                    if (ml.once)
+                    {
+                        RemoveListener(mEvent.nId, ml.mFunc);
+                    }
+                }
             }
-            catch (Exception e)
-            {
-                Debug.LogError($"Error executing action in UnityMainThreadDispatcher: {e}");
-            }
-            processedCount++;
-        }
-        
-        if (processedCount > 0)
-        {
-            _queuedActionsCount -= processedCount;
         }
     }
-    
-    public void Clear()
-    {
-        while (_actionQueue.TryDequeue(out _)) { }
-        _queuedActionsCount = 0;
-    }
-    
-    public bool IsEmpty => _actionQueue.IsEmpty;
 }
