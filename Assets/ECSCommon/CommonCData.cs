@@ -26,6 +26,7 @@ public struct GameObjectCData : KKIComponentData
 
 public struct SpriteRendererCData : KKIComponentData
 {
+    public int nOrderId;
     public FixedString32Bytes atlasName;
     public FixedString32Bytes spriteName;
 

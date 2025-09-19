@@ -73,12 +73,13 @@ public partial class PokerAniSystem : SystemBase
             // UnityMainThreadDispatcher.Instance.Enqueue(new MainThreadData_End());
         }
 
-        foreach (var (mSpriteRenderer, mSpriteRendererCData) in SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<UnityEngine.SpriteRenderer>, SpriteRendererCData>())
+        foreach (var (mSpriteRenderer, mSpriteRendererCData) in SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<UnityEngine.SpriteRenderer>, RefRO<SpriteRendererCData>>())
         {
             SpriteAtlas mSpriteAtlas = PokerGoMgr.Instance.mPokerAtlas;
-            Sprite spri_bg = mSpriteAtlas.GetSprite(mSpriteRendererCData.spriteName.ToString());
+            Sprite spri_bg = mSpriteAtlas.GetSprite(mSpriteRendererCData.ValueRO.spriteName.ToString());
             //n_card.Value.sprite = spri_bg;
             mSpriteRenderer.Value.sprite = spri_bg;
+            mSpriteRenderer.Value.sortingOrder = mSpriteRendererCData.ValueRO.nOrderId;
         }
     }
 
@@ -106,8 +107,23 @@ public partial class PokerAniSystem : SystemBase
         var n_back_cdata = SystemAPI.GetComponentRW<SpriteRendererCData>(mEntity_Back);
         n_card_cdata.ValueRW.spriteName = p_name;
         n_back_cdata.ValueRW.spriteName = p_name_back;
+        n_card_cdata.ValueRW.nOrderId = cardNum;
         this.onSetNormal(mData);
     }
+
+    public void UpdatePokerSortingOrderInFly(Entity mEntity_PokerItem)
+    {
+        var mData = SystemAPI.GetComponentRW<PokerItemCData>(mEntity_PokerItem);
+        var mEntity_Poker = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Sprite");
+        var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
+
+        var n_card_cdata = SystemAPI.GetComponentRW<SpriteRendererCData>(mEntity_Poker);
+        var n_back_cdata = SystemAPI.GetComponentRW<SpriteRendererCData>(mEntity_Back);
+        n_card_cdata.ValueRW.nOrderId = mData.ValueRO.cardNum + 100;
+        n_back_cdata.ValueRW.nOrderId = mData.ValueRO.cardNum + 100;
+        this.onSetNormal(mData);
+    }
+
 
     void onSetBack(RefRW<PokerItemCData> mData)
     {
@@ -339,6 +355,8 @@ public partial class PokerAniSystem : SystemBase
             if (mPokerAnimationCData.ValueRW.triggerDelay <= 0)
             {
                 mPokerAnimationCData.ValueRW.trigger = true;
+                UpdatePokerSortingOrderInFly(mEntity);
+
             }
         }
     }
