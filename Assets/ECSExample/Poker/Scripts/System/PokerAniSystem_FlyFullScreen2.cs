@@ -129,8 +129,8 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
 
         var mEntity_Poker = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Sprite");
         var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
-        var mSpriteRenderer1 = Unity.Entities.SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Poker);
-        var mSpriteRenderer2 = Unity.Entities.SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
+        var mSpriteRenderer1 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Poker);
+        var mSpriteRenderer2 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
 
         SpriteAtlas mSpriteAtlas = PokerGoMgr.Instance.mPokerAtlas;
         Sprite spri_bg = mSpriteAtlas.GetSprite(p_name);
@@ -151,8 +151,8 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
         var mData = SystemAPI.GetComponentRW<PokerItemCData>(mEntity_PokerItem);
         var mEntity_Poker = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Sprite");
         var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
-        var mSpriteRenderer1 = Unity.Entities.SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Poker);
-        var mSpriteRenderer2 = Unity.Entities.SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
+        var mSpriteRenderer1 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Poker);
+        var mSpriteRenderer2 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
         mSpriteRenderer1.sortingOrder = nOrderId++ + 100;
         mSpriteRenderer2.sortingOrder = 0;
     }
