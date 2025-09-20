@@ -4,6 +4,15 @@ using UnityEngine;
 
 public static class ECSHelper
 {
+    public static void AddMissComponentData<T>(EntityManager em, Entity mEntity)
+        where T: unmanaged, IComponentData
+    {
+        if(!em.HasComponent<T>(mEntity))
+        {
+            em.AddComponent<T>(mEntity);
+        }
+    }
+
     public static Entity FindChildEntityByName(EntityManager em, Entity rootEntity, string targetName)
     {
         if (!em.HasBuffer<LinkedEntityGroup>(rootEntity))

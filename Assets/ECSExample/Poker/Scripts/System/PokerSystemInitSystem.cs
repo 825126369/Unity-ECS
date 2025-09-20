@@ -52,10 +52,10 @@ public partial class PokerSystemInitSystem : SystemBase
 
         mPokerSystemSingleton.ValueRW.worldPos_ScreenTopLeft = PokerGoMgr.Instance.TopLeft_obj.transform.position;
         mPokerSystemSingleton.ValueRW.worldPos_ScreenBottomRight = PokerGoMgr.Instance.BottomRight_obj.transform.position;
-        mPokerSystemSingleton.ValueRW.maxHeight = PokerGoMgr.Instance.TopLeft_obj.transform.position.y;
+        mPokerSystemSingleton.ValueRW.maxHeight = PokerGoMgr.Instance.TopLeft_obj.transform.position.y + 200;
         mPokerSystemSingleton.ValueRW.minHeight = PokerGoMgr.Instance.BottomRight_obj.transform.position.y;
-        mPokerSystemSingleton.ValueRW.maxWidth = PokerGoMgr.Instance.BottomRight_obj.transform.position.x + 200;
-        mPokerSystemSingleton.ValueRW.minWidth = PokerGoMgr.Instance.TopLeft_obj.transform.position.x - 200;
+        mPokerSystemSingleton.ValueRW.maxWidth = PokerGoMgr.Instance.BottomRight_obj.transform.position.x + 100;
+        mPokerSystemSingleton.ValueRW.minWidth = PokerGoMgr.Instance.TopLeft_obj.transform.position.x - 100;
 
         mPokerSystemSingleton.ValueRW.State = PokerGameState.None;
         mPokerSystemSingleton.ValueRW.nAniType =  PokerAniType.FlyFullScreen;

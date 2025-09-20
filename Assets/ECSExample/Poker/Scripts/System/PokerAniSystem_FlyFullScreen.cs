@@ -14,6 +14,7 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
 {
     private EntityQuery StartDoAniEventQuery;
     private NativeList<Entity> mTimerRemoveEntityList;
+    private float mFinsihTime = 0;
     protected override void OnCreate()
     {
         base.OnCreate();
@@ -69,26 +70,42 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
 
             mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
             mInstance.ValueRW.State = PokerGameState.Playing;
+            mFinsihTime = 6.0f;
         }
         else if (mInstance.ValueRO.State == PokerGameState.Playing)
         {
-            var allNodes = mInstance.ValueRW.allNodes;
-            for (int i = 0; i < allNodes.Length; i++)
+            float d2 = deltaTime;
+            float fixedDeltaTime = 0.01666f;
+            while (d2 > fixedDeltaTime)
             {
-                Entity mEntity = allNodes[i];
-                this.updateAnimation(mEntity, deltaTime);
-            }
-
-            for (int i = mTimerRemoveEntityList.Length - 1; i >= 0; i--)
-            {
-                var mEntity = mTimerRemoveEntityList[i];
-                var mPokerTimerRemoveCData = SystemAPI.GetComponentRW<PokerTimerRemoveCData>(mEntity);
-                mPokerTimerRemoveCData.ValueRW.mRomveCdTime -= deltaTime;
-                if (mPokerTimerRemoveCData.ValueRW.mRomveCdTime <= 0)
+                d2 -= fixedDeltaTime;
+                mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
+                var allNodes = mInstance.ValueRW.allNodes;
+                for (int i = 0; i < allNodes.Length; i++)
                 {
-                    EntityManager.RemoveComponent<PokerTimerRemoveCData>(mEntity);
-                    mTimerRemoveEntityList.RemoveAt(i);
-                    EntityPoolManager.Instance.Recycle(mEntity);
+                    Entity mEntity = allNodes[i];
+                    this.updateAnimation(mEntity, fixedDeltaTime);
+                }
+
+                for (int i = mTimerRemoveEntityList.Length - 1; i >= 0; i--)
+                {
+                    var mEntity = mTimerRemoveEntityList[i];
+                    var mPokerTimerRemoveCData = SystemAPI.GetComponentRW<PokerTimerRemoveCData>(mEntity);
+                    mPokerTimerRemoveCData.ValueRW.mRomveCdTime -= fixedDeltaTime;
+                    if (mPokerTimerRemoveCData.ValueRW.mRomveCdTime <= 0)
+                    {
+                        EntityManager.RemoveComponent<PokerTimerRemoveCData>(mEntity);
+                        mTimerRemoveEntityList.RemoveAt(i);
+                        EntityPoolManager.Instance.Recycle(mEntity);
+                    }
+                }
+
+                mFinsihTime -= fixedDeltaTime;
+                if (mFinsihTime <= 0)
+                {
+                    DoDestroyAction();
+                    mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
+                    mInstance.ValueRW.State = PokerGameState.End;
                 }
             }
         }
@@ -108,7 +125,7 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
             mSpriteRenderer.Value.sortingOrder = mSpriteRendererCData.ValueRO.nOrderId;
         }
     }
-
+    
     public void initByNum(Entity mEntity_PokerItem, int cardNum, int colorType)
     {
         var mData = SystemAPI.GetComponentRW<PokerItemCData>(mEntity_PokerItem);
@@ -132,6 +149,7 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
         this.onSetNormal(mEntity_PokerItem);
     }
 
+    int nOrderId = 0;
     public void UpdatePokerSortingOrderInFly(Entity mEntity_PokerItem)
     {
         var mData = SystemAPI.GetComponentRW<PokerItemCData>(mEntity_PokerItem);
@@ -140,8 +158,8 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
 
         var n_card_cdata = SystemAPI.GetComponentRW<SpriteRendererCData>(mEntity_Poker);
         var n_back_cdata = SystemAPI.GetComponentRW<SpriteRendererCData>(mEntity_Back);
-        n_card_cdata.ValueRW.nOrderId = mData.ValueRO.cardNum + 100;
-        n_back_cdata.ValueRW.nOrderId = mData.ValueRO.cardNum + 100;
+        Debug.Log("nOrderId: " + nOrderId);
+        n_card_cdata.ValueRW.nOrderId = nOrderId++ + 100;
         this.onSetNormal(mEntity_PokerItem);
     }
     
@@ -163,8 +181,9 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
         mInstance.ValueRW.animationOver = false;
         mInstance.ValueRW.allNodes = new NativeList<Entity>(54, Allocator.Persistent);
         mInstance.ValueRW.colors = colors;
-            
-        float delay = 0.1f;
+
+        int nAniIndex = 0;
+        int nHengIndex = 0;
         int offsetX = 0;
         for (int i = 0; i < 4; i++)
         {
@@ -172,14 +191,16 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
             int offset = offsetX * i;
             mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
             Vector3 frompt = mInstance.ValueRO.worldPos_start_list[i];
-            delay = i * 0.5f;
-            float delayvalue = 0;
-            float delayoffset = 0.1f;
+
+            int nShuIndex = 0;
             for (int j = 13; j > 0; j--)
             {
-                this.showAnimation_Default_ColValue(i, frompt, delay + delayvalue, color, j, offsetX);
-                delayvalue += delayoffset;
+                float delay = nShuIndex * 0.7f + nHengIndex * 0.18f;
+                this.showAnimation_Default_ColValue(i, frompt, delay, color, j, offsetX);
+                nAniIndex++;
+                nShuIndex++;
             }
+            nHengIndex++;
         }
     }
 
@@ -188,12 +209,14 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
         Entity mEntity = this.addStaticCard(pt, color, value);
 
         var mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-        var mPokerAnimationCData = SystemAPI.GetComponentRW<PokerAnimationCData>(mEntity);
+        var mPokerAnimationCData = SystemAPI.GetComponentRW<PokerAnimationCData2>(mEntity);
+        var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mEntity);
+
         mPokerAnimationCData.ValueRW.Init(colindex, color, value);
         mPokerAnimationCData.ValueRW.open = true;
         mPokerAnimationCData.ValueRW.trigger = false;
         mPokerAnimationCData.ValueRW.triggerDelay = delay;
-        mPokerAnimationCData.ValueRW.btoRight = PokerAnimationCData.toRight(colindex);
+        mPokerAnimationCData.ValueRW.btoRight = PokerAnimationCData2.toRight();
         mPokerAnimationCData.ValueRW.startPt = pt;
         mPokerAnimationCData.ValueRW.nowPt = pt;
         mPokerAnimationCData.ValueRW.mEntity = mEntity;
@@ -203,17 +226,16 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
         mPokerAnimationCData.ValueRW.minWidth = mInstance.ValueRO.minWidth;
         mPokerAnimationCData.ValueRW.maxWidth = mInstance.ValueRO.maxWidth;
 
-        mPokerAnimationCData.ValueRW.vx = PokerAnimationCData.randomVx();
+        mPokerAnimationCData.ValueRW.vx = PokerAnimationCData2.randomVx();
         mPokerAnimationCData.ValueRW.vx_a = 0;
-        mPokerAnimationCData.ValueRW.vy = PokerAnimationCData.randomVy();
+        mPokerAnimationCData.ValueRW.vy = PokerAnimationCData2.randomVy();
 
         if (!mPokerAnimationCData.ValueRW.btoRight)
         {
             mPokerAnimationCData.ValueRW.vx *= -1;
         }
 
-        mPokerAnimationCData.ValueRW.vy_a = PokerAnimationCData.randomVy_a();
-        mPokerAnimationCData.ValueRW.deltTime = 0;
+        mPokerAnimationCData.ValueRW.vy_a = PokerAnimationCData2.randomVy_a();
         mInstance.ValueRW.allNodes.Add(mEntity);
     }
 
@@ -224,9 +246,9 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
 
         Unity.Assertions.Assert.IsTrue(mInstance.ValueRO.Prefab != Entity.Null, "mInstance.Prefab == Entity.Null");
         Entity mTargetEntity = EntityPoolManager.Instance.Spawn(mInstance.ValueRO.Prefab, PoolTagConst.Poker);
-        EntityManager.AddComponentData(mTargetEntity, new PokerItemCData());
-        EntityManager.AddComponentData(mTargetEntity, new PokerAnimationCData());
-        EntityManager.AddComponentData(mTargetEntity, new Parent());
+        ECSHelper.AddMissComponentData<PokerItemCData>(EntityManager, mTargetEntity);
+        ECSHelper.AddMissComponentData<PokerAnimationCData2>(EntityManager, mTargetEntity);
+        ECSHelper.AddMissComponentData<Parent>(EntityManager, mTargetEntity);
 
         var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mTargetEntity);
         var mPokerItemCData = SystemAPI.GetComponentRW<PokerItemCData>(mTargetEntity);
@@ -241,29 +263,29 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
 
     private void CloneFlyObj(Entity mEntry)
     {
-        var mPokerAnimationCData = SystemAPI.GetComponentRO<PokerAnimationCData>(mEntry);
+        var mPokerAnimationCData = SystemAPI.GetComponentRO<PokerAnimationCData2>(mEntry);
         var mLocalTransform = SystemAPI.GetComponentRO<LocalTransform>(mEntry);
         Entity mObj = addStaticCard(mLocalTransform.ValueRO.Position, 
             mPokerAnimationCData.ValueRO.color, 
             mPokerAnimationCData.ValueRO.value);
 
+        UpdatePokerSortingOrderInFly(mObj);
         mTimerRemoveEntityList.Add(mObj);
-        EntityManager.AddComponentData(mObj, new PokerTimerRemoveCData() { mRomveCdTime = 3.0f});
+        EntityManager.AddComponentData(mObj, new PokerTimerRemoveCData() { mRomveCdTime = 6.0f});
     }
 
     void updateAnimation(Entity mEntity, float dt)
     {
-        var mPokerAnimationCData = SystemAPI.GetComponentRW<PokerAnimationCData>(mEntity);
+        var mPokerAnimationCData = SystemAPI.GetComponentRW<PokerAnimationCData2>(mEntity);
         if (!mPokerAnimationCData.ValueRW.open)
         {
             return;
         }
 
-        mPokerAnimationCData = SystemAPI.GetComponentRW<PokerAnimationCData>(mEntity);
+        mPokerAnimationCData = SystemAPI.GetComponentRW<PokerAnimationCData2>(mEntity);
         var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mEntity);
         if (mPokerAnimationCData.ValueRW.trigger)
         {
-            var deltTime = mPokerAnimationCData.ValueRW.deltTime;
             var startPt = mPokerAnimationCData.ValueRW.nowPt;
             var maxHeight = mPokerAnimationCData.ValueRW.maxHeight;
             var toRight = mPokerAnimationCData.ValueRW.btoRight;
@@ -294,21 +316,7 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
             {
                 nowPt.y = mPokerAnimationCData.ValueRW.maxHeight;
                 mPokerAnimationCData.ValueRW.vy = 0;
-                mPokerAnimationCData.ValueRW.maxHeight = mPokerAnimationCData.ValueRW.maxHeight * 0.8f;
-            }
-
-            bool willRemove = false;
-            if (nowPt.x < mPokerAnimationCData.ValueRW.minWidth - PokerSystemSingleton.CardWidth)
-            {
-                nowPt.x = mPokerAnimationCData.ValueRW.minWidth;
-                willRemove = true;
-            }
-
-            if (nowPt.x > mPokerAnimationCData.ValueRW.maxWidth + PokerSystemSingleton.CardWidth)
-            {
-                nowPt.x = mPokerAnimationCData.ValueRW.maxWidth;
-                mPokerAnimationCData.ValueRW.vx *= -1;
-                willRemove = true;
+                mPokerAnimationCData.ValueRW.maxHeight = mPokerAnimationCData.ValueRW.maxHeight * 0.7f;
             }
 
             // 每两帧之间 添加
@@ -317,24 +325,10 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
             mPokerAnimationCData.ValueRW.nowPt = nowPt;
             
             CloneFlyObj(mEntity);
-            mPokerAnimationCData = SystemAPI.GetComponentRW<PokerAnimationCData>(mEntity);
-            mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mEntity);
-            // 碰到边界，不在产生新的额
-            if (mPokerAnimationCData.ValueRW.open)
+            mPokerAnimationCData = SystemAPI.GetComponentRW<PokerAnimationCData2>(mEntity);
+            if (Mathf.Abs(nowPt.x) > mPokerAnimationCData.ValueRW.maxWidth + 100)
             {
-                mLocalTransform.ValueRW.Position = nowPt;
-                if (willRemove)
-                {
-                    mPokerAnimationCData.ValueRW.open = false;
-                    if (mPokerAnimationCData.ValueRW.value == 6 && mPokerAnimationCData.ValueRW.index == 2)
-                    {
-                        this.DoDestroyAction();
-
-                        RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-                        mInstance.ValueRW.State = PokerGameState.End;
-                    }
-                    return;
-                }
+                mPokerAnimationCData.ValueRW.open = false;
             }
         }
         else
@@ -343,8 +337,7 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
             if (mPokerAnimationCData.ValueRW.triggerDelay <= 0)
             {
                 mPokerAnimationCData.ValueRW.trigger = true;
-                UpdatePokerSortingOrderInFly(mEntity);
-
+                mLocalTransform.ValueRW.Scale = 0;
             }
         }
     }
@@ -373,7 +366,7 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
         for (int index = 0; index < mInstance.ValueRO.allNodes.Length; index++)
         {
             var mEntity = mInstance.ValueRO.allNodes[index];
-            PokerAnimationCData mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData>(mEntity);
+            PokerAnimationCData2 mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData2>(mEntity);
             mPokerAnimationCData.Reset();
         }
 
