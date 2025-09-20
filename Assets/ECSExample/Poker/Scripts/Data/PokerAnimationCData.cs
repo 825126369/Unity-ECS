@@ -83,17 +83,17 @@ public struct PokerAnimationCData : IComponentData
 
     public static float randomVx()
     {
-        return UnityEngine.Random.Range(100, 200);
+        return UnityEngine.Random.Range(10, 20);
     }
 
     public static float randomVy()
     {
-        return UnityEngine.Random.Range(100, 300);
+        return UnityEngine.Random.Range(10, 30);
     }
 
     public static float randomVy_a()
     {
-        return UnityEngine.Random.Range(2000, 3000) * -1;
+        return UnityEngine.Random.Range(200, 300) * -1;
     }
 
     public static int getCardId(int color, int value)
