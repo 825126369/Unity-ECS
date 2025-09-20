@@ -42,7 +42,7 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
         RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-        if(mInstance.ValueRO.nAniType != PokerAniType.FlyFullScreen)
+        if(mInstance.ValueRO.nAniType != PokerAniType.FlyFullScreen2)
         {
             return;
         }
@@ -113,16 +113,6 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
             mInstance.ValueRW.State = PokerGameState.None;
             UnityMainThreadDispatcher.Instance.Fire(PokerECSEvent.PokerAniFinish);
         }
-
-        foreach (var (mSpriteRenderer, mSpriteRendererCData) in 
-            SystemAPI.Query<SystemAPI.ManagedAPI.UnityEngineComponent<UnityEngine.SpriteRenderer>, 
-            RefRO<SpriteRendererCData>>())
-        {
-            SpriteAtlas mSpriteAtlas = PokerGoMgr.Instance.mPokerAtlas;
-            Sprite spri_bg = mSpriteAtlas.GetSprite(mSpriteRendererCData.ValueRO.spriteName.ToString());
-            mSpriteRenderer.Value.sprite = spri_bg;
-            mSpriteRenderer.Value.sortingOrder = mSpriteRendererCData.ValueRO.nOrderId;
-        }
     }
     
     public void initByNum(Entity mEntity_PokerItem, int cardNum, int colorType)
@@ -131,8 +121,7 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
         mData.ValueRW.color = colorType;
         mData.ValueRW.cardNum = cardNum;
         mData.ValueRW.nCardId = colorType * 13 + cardNum;
-
-        //刷新花色点数ui
+        
         SpriteAtlas atl_game = PokerGoMgr.Instance.mPokerAtlas;
         string p_name = "di_" + cardNum + "_" + colorType;
         SpriteAtlas atl_game1 = PokerGoMgr.Instance.mPokerBackAtlas;
@@ -140,11 +129,19 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
 
         var mEntity_Poker = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Sprite");
         var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
-        var n_card_cdata = SystemAPI.GetComponentRW<SpriteRendererCData>(mEntity_Poker);
-        var n_back_cdata = SystemAPI.GetComponentRW<SpriteRendererCData>(mEntity_Back);
-        n_card_cdata.ValueRW.spriteName = p_name;
-        n_back_cdata.ValueRW.spriteName = p_name_back;
-        n_card_cdata.ValueRW.nOrderId = cardNum;
+        var mSpriteRenderer1 = Unity.Entities.SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Poker);
+        var mSpriteRenderer2 = Unity.Entities.SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
+
+        SpriteAtlas mSpriteAtlas = PokerGoMgr.Instance.mPokerAtlas;
+        Sprite spri_bg = mSpriteAtlas.GetSprite(p_name);
+        mSpriteRenderer1.sprite = spri_bg;
+        mSpriteRenderer1.sortingOrder = cardNum;
+
+        mSpriteAtlas = PokerGoMgr.Instance.mPokerAtlas;
+        spri_bg = mSpriteAtlas.GetSprite(p_name_back);
+        mSpriteRenderer2.sprite = spri_bg;
+        mSpriteRenderer2.sortingOrder = 0;
+
         this.onSetNormal(mEntity_PokerItem);
     }
 
@@ -154,12 +151,10 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
         var mData = SystemAPI.GetComponentRW<PokerItemCData>(mEntity_PokerItem);
         var mEntity_Poker = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Sprite");
         var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
-
-        var n_card_cdata = SystemAPI.GetComponentRW<SpriteRendererCData>(mEntity_Poker);
-        var n_back_cdata = SystemAPI.GetComponentRW<SpriteRendererCData>(mEntity_Back);
-        Debug.Log("nOrderId: " + nOrderId);
-        n_card_cdata.ValueRW.nOrderId = nOrderId++ + 100;
-        this.onSetNormal(mEntity_PokerItem);
+        var mSpriteRenderer1 = Unity.Entities.SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Poker);
+        var mSpriteRenderer2 = Unity.Entities.SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
+        mSpriteRenderer1.sortingOrder = nOrderId++ + 100;
+        mSpriteRenderer2.sortingOrder = 0;
     }
     
     void onSetBack(Entity mEntity_PokerItem)
