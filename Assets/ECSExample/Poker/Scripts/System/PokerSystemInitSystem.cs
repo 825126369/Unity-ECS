@@ -58,7 +58,7 @@ public partial class PokerSystemInitSystem : SystemBase
         mPokerSystemSingleton.ValueRW.minWidth = PokerGoMgr.Instance.TopLeft_obj.transform.position.x - 100;
 
         mPokerSystemSingleton.ValueRW.State = PokerGameState.None;
-        mPokerSystemSingleton.ValueRW.nAniType =  PokerAniType.FlyFullScreen;
+        mPokerSystemSingleton.ValueRW.nAniType =  PokerAniType.FlyFullScreen2;
 
         //这里就是把一些关键节点 找到对应的实体，这些都是烘培的实体，到底是第几帧 加载了，不知道
         foreach (var (mData, mEntity) in SystemAPI.Query<RefRO<GameObjectCData>>().WithEntityAccess())

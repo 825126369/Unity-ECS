@@ -1,5 +1,4 @@
 using Unity.Entities;
-using Unity.Entities.UniversalDelegates;
 using UnityEngine;
 
 //ÆË¿ËÅÆ Image ºæÅàÆ÷
