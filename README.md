@@ -54,16 +54,18 @@ DOTS 的基础设施：
 (3) 结构性变更: 触发条件: 增删任何Entity, 增删任何 IComponentData.
 如果发生 结构性变更（Structural Change）会导致你缓存的任何IComponentData全部失效！无论你访问的是哪个组件、哪个 Entity！  
 
-(4) Hybrid方式：“混合模式”。
+(4) Entity 本身是一个“稳定句柄”（stable handle），即使发生结构性变更（如添加/删除组件、原型变更），Entity 的值（Index + Version）仍然有效，不会“失效”或“悬空”
+
+(5) Hybrid方式：“混合模式”。
 即实体（Entity）只负责位置、动画等逻辑, 渲染交给 GameObject 系统. 通过 UnityObjectRef<GameObject> 字段, 来与GameObject 世界中的物体进行交互。虽然不是纯 ECS，但能利用 ECS 的性能优势。
 空当接龙中， 如何获取Entity的UI渲染组件或SpriteRenderer组件，（现在官方还没有）。 要么通过MeshRenderer 写一套类似 SpriteRenderer的组件，要么就是用Hybrid混合模式。
 
-(5) Authoring 脚本（进行烘培Bake的脚本）只局限于 GameObject 本身，  不能对他的子物体进行遍历添加Data。比如这个PokerItemObj，得专门在他的每个需要操作的子节点上 加上Authoring 脚本。
+(6) Authoring 脚本（进行烘培Bake的脚本）只局限于 GameObject 本身，  不能对他的子物体进行遍历添加Data。比如这个PokerItemObj，得专门在他的每个需要操作的子节点上 加上Authoring 脚本。
 
-(6)
+(7)
 LocalToWorld.Position	世界坐标（World Space）	从局部 → 世界变换后的最终位置
 LocalTransform.Position	局部坐标（Local Space）	相对于父节点的位置（若无父节点，则等同世界坐标）
 
-(7) Data 如果包含 NativeList 等相关集合，不能用于GameObject烘培, 能否用于 单例（SystemAPI.SetSingleton）还待观察。
+(8) Data 如果包含 NativeList 等相关集合，不能用于GameObject烘培, 能否用于 单例（SystemAPI.SetSingleton）还待观察。
 
 如果你看到物体没渲染出来， 不管是编辑模式，还是运行模式，都是前两步出错导致

@@ -11,7 +11,7 @@ using UnityEngine.U2D;
 
 [RequireMatchingQueriesForUpdate]
 [BurstCompile]
-public partial class PokerAniSystem : SystemBase
+public partial class PokerAniSystem_Default : SystemBase
 {
     private EntityQuery StartDoAniEventQuery;
     protected override void OnCreate()
@@ -40,6 +40,11 @@ public partial class PokerAniSystem : SystemBase
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
         RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
+        if (mInstance.ValueRO.nAniType != PokerAniType.Default)
+        {
+            return;
+        }
+
         if (mInstance.ValueRO.State == PokerGameState.None)
         {
             foreach (var (mEvent, mEntity) in SystemAPI.Query<RefRO<StartDoAniEvent>>().WithEntityAccess())

@@ -3,6 +3,12 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
+public enum PokerAniType
+{
+    Default = 0,
+    FlyFullScreen = 1,
+}
+
 public enum PokerGameState
 {
     None = 0,
@@ -45,6 +51,7 @@ public struct PokerSystemSingleton : IComponentData, IDisposable
     public float3 worldPos_ScreenTopLeft;
     public float3 worldPos_ScreenBottomRight;
     public PokerGameState State;
+    public PokerAniType nAniType;
     public float maxHeight;
     public float minHeight;
     public float maxWidth;

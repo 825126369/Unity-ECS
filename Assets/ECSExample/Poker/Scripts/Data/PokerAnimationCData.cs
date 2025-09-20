@@ -9,6 +9,11 @@ public struct PokerItemCData : IComponentData
     public int nCardId;
 }
 
+public struct PokerTimerRemoveCData : IComponentData
+{
+    public float mRomveCdTime;
+}
+
 public struct PokerAnimationCData : IComponentData
 {
     public Entity mEntity;
@@ -34,7 +39,7 @@ public struct PokerAnimationCData : IComponentData
     public float minHeight;
     public float maxWidth;
     public float minWidth;
-
+    
     public void Reset()
     {
         mEntity = Entity.Null;
@@ -65,7 +70,7 @@ public struct PokerAnimationCData : IComponentData
         this.color = color;
         this.index = index;
         this.value = value;
-        this.cardid = PokerAnimationCData.getCardId(color, value);
+        this.cardid = getCardId(color, value);
     }
 
     public static bool toRight(int index)
@@ -78,17 +83,17 @@ public struct PokerAnimationCData : IComponentData
 
     public static float randomVx()
     {
-        return UnityEngine.Random.Range(200, 260);
+        return UnityEngine.Random.Range(100, 200);
     }
 
     public static float randomVy()
     {
-        return UnityEngine.Random.Range(300, 500);
+        return UnityEngine.Random.Range(100, 300);
     }
 
     public static float randomVy_a()
     {
-        return UnityEngine.Random.Range(4000, 5000) * -1;
+        return UnityEngine.Random.Range(2000, 3000) * -1;
     }
 
     public static int getCardId(int color, int value)

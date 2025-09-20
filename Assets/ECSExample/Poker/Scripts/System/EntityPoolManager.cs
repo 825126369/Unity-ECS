@@ -50,13 +50,10 @@ public partial class EntityPoolManager : SystemBase
         for (int i = 0; i < pool.Length; i++)
         {
             var entity = pool[i];
-            if (EntityManager.HasComponent<Disabled>(entity))
-            {
-                EntityManager.RemoveComponent<Disabled>(entity);
-                pool.RemoveAtSwapBack(i);
-                ResetEntity(entity);
-                return entity;
-            }
+            ECSHelper.Enable(EntityManager, entity, true);
+            pool.RemoveAtSwapBack(i);
+            ResetEntity(entity);
+            return entity;
         }
 
         var newEntity = EntityManager.Instantiate(prefab);
@@ -78,11 +75,7 @@ public partial class EntityPoolManager : SystemBase
             _pools[poolId] = pool;
         }
 
-        if (!EntityManager.HasComponent<Disabled>(entity))
-        {
-            EntityManager.AddComponent<Disabled>(entity);
-        }
-
+        ECSHelper.Enable(EntityManager, entity, false);
         ResetEntity(entity);
         pool.Add(entity);
     }
