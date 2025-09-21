@@ -95,6 +95,33 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
     }
 
     [BurstCompile]
+    partial struct InitJob : IJobEntity
+    {
+        public float DeltaTime;
+        public EntityCommandBuffer.ParallelWriter ECB;
+        private int entityIndexInQuery;
+
+        void Execute([EntityIndexInQuery] int entityIndexInQuery,
+            ref PokerAnimationCData mPokerAnimationCData,
+            ref LocalTransform mLocalTransform,
+            ref Entity mEntity)
+        {
+            //this.entityIndexInQuery = entityIndexInQuery;
+
+            //float d2 = DeltaTime;
+            //float fixedDeltaTime = 0.01666f;
+            //while (d2 > 0)
+            //{
+            //    d2 -= fixedDeltaTime;
+            //    updateAnimation(fixedDeltaTime,
+            //        ref mPokerAnimationCData,
+            //        ref mLocalTransform,
+            //        ref mEntity);
+            //}
+        }
+    }
+
+    [BurstCompile]
     partial struct UpdateCardAnimationJob : IJobEntity
     {
         public float DeltaTime;
@@ -185,21 +212,19 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
         Entity addStaticCard(float3 pt, int colorType, int value)
         {
             RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-
             Unity.Assertions.Assert.IsTrue(mInstance.ValueRO.Prefab != Entity.Null, "mInstance.Prefab == Entity.Null");
-            Entity mTargetEntity = EntityPoolManager.Instance.Spawn(mInstance.ValueRO.Prefab, PoolTagConst.Poker);
-            ECSHelper.AddMissComponentData<PokerItemCData>(EntityManager, mTargetEntity);
-            ECSHelper.AddMissComponentData<PokerAnimationCData2>(EntityManager, mTargetEntity);
-            ECSHelper.AddMissComponentData<Parent>(EntityManager, mTargetEntity);
 
+            Entity mTargetEntity = ECB.Instantiate(entityIndexInQuery, mInstance.ValueRO.Prefab);
+            ECB.AddComponent<PokerItemCData>(this.entityIndexInQuery, mTargetEntity);
             ECB.AddComponent<PokerAnimationCData2>(this.entityIndexInQuery, mTargetEntity);
-            ECB.AddComponent<PokerAnimationCData2>(this.entityIndexInQuery, mTargetEntity);
+            ECB.AddComponent<Parent>(entityIndexInQuery, mTargetEntity);
 
             var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mTargetEntity);
             var mPokerItemCData = SystemAPI.GetComponentRW<PokerItemCData>(mTargetEntity);
             var mParent = SystemAPI.GetComponentRW<Parent>(mTargetEntity);
             mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
             mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
+
             mLocalTransform.ValueRW.Position = pt;
             mLocalTransform.ValueRW.Scale = mInstance.ValueRW.worldScale_start_list[0].x;
             initByNum(mTargetEntity, value, colorType);
@@ -216,23 +241,10 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
                 mPokerAnimationCData.color,
                 mPokerAnimationCData.value);
 
-            UpdatePokerSortingOrderInFly(mObj);
-            mTimerRemoveEntityList.Add(mObj);
             ECB.AddComponent(entityIndexInQuery, mObj, new PokerTimerRemoveCData() { mRomveCdTime = 6.0f });
         }
 
-        int nOrderId = 0;
-        public void UpdatePokerSortingOrderInFly(Entity mEntity_PokerItem)
-        {
-            var mData = new PokerItemCData();
 
-            var mEntity_Poker = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Sprite");
-            var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
-            var mSpriteRenderer1 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Poker);
-            var mSpriteRenderer2 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
-            mSpriteRenderer1.sortingOrder = nOrderId++ + 100;
-            mSpriteRenderer2.sortingOrder = 0;
-        }
     }
 
     public void initByNum(Entity mEntity_PokerItem, int cardNum, int colorType)
