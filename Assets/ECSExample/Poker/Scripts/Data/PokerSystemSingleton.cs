@@ -8,6 +8,7 @@ public enum PokerAniType
     Default = 0,
     FlyFullScreen = 1,
     FlyFullScreen2 = 2,
+    FlyFullScreen3 = 3,
 }
 
 public enum PokerGameState

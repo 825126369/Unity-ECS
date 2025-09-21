@@ -21,6 +21,7 @@ public static class ECSHelper
             return Entity.Null;
         }
 
+
         var buffer = em.GetBuffer<LinkedEntityGroup>(rootEntity);
         foreach (var linkedEntity in buffer)
         {

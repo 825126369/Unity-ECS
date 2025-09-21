@@ -76,7 +76,7 @@ public partial class PokerAniSystem_FlyFullScreen : SystemBase
         {
             float d2 = deltaTime;
             float fixedDeltaTime = 0.01666f;
-            while (d2 > fixedDeltaTime)
+            while (d2 > 0)
             {
                 d2 -= fixedDeltaTime;
                 mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();

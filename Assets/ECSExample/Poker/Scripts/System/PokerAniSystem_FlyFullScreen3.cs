@@ -7,14 +7,12 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.U2D;
-using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
 [RequireMatchingQueriesForUpdate]
 [BurstCompile]
-public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
+public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
 {
     private EntityQuery StartDoAniEventQuery;
-    private EntityQuery PokerAnimationCData2Query;
     private NativeList<Entity> mTimerRemoveEntityList;
     private float mFinsihTime = 0;
 
@@ -22,7 +20,6 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
     {
         base.OnCreate();
         StartDoAniEventQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<StartDoAniEvent>().Build(this);
-        PokerAnimationCData2Query = new EntityQueryBuilder(Allocator.Temp).WithAll<RefRW<PokerAnimationCData2>>().Build(this);
         mTimerRemoveEntityList = new NativeList<Entity>(5, Allocator.Persistent);
     }
 
@@ -47,7 +44,7 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
         RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-        if(mInstance.ValueRO.nAniType != PokerAniType.FlyFullScreen2)
+        if(mInstance.ValueRO.nAniType != PokerAniType.FlyFullScreen3)
         {
             return;
         }
@@ -78,40 +75,17 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
         }
         else if (mInstance.ValueRO.State == PokerGameState.Playing)
         {
-            float d2 = deltaTime;
-            float fixedDeltaTime = 0.01666f;
-            while (d2 > 0)
+            var PokerAnimationCData2Query = new EntityQueryBuilder(Allocator.Temp).WithAll<RefRW<PokerAnimationCData2>>().Build(this);
+            var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
+                              .CreateCommandBuffer(World.Unmanaged);
+            
+            var animationJob = new UpdateCardAnimationJob()
             {
-                d2 -= fixedDeltaTime;
-                mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-                var allNodes = mInstance.ValueRW.allNodes;
-                for (int i = 0; i < allNodes.Length; i++)
-                {
-                    Entity mEntity = allNodes[i];
-                    this.updateAnimation(mEntity, fixedDeltaTime);
-                }
+                DeltaTime = deltaTime,
+                ECB = ecb.AsParallelWriter()
+            };
 
-                for (int i = mTimerRemoveEntityList.Length - 1; i >= 0; i--)
-                {
-                    var mEntity = mTimerRemoveEntityList[i];
-                    var mPokerTimerRemoveCData = SystemAPI.GetComponentRW<PokerTimerRemoveCData>(mEntity);
-                    mPokerTimerRemoveCData.ValueRW.mRomveCdTime -= fixedDeltaTime;
-                    if (mPokerTimerRemoveCData.ValueRW.mRomveCdTime <= 0)
-                    {
-                        EntityManager.RemoveComponent<PokerTimerRemoveCData>(mEntity);
-                        mTimerRemoveEntityList.RemoveAt(i);
-                        EntityPoolManager.Instance.Recycle(mEntity);
-                    }
-                }
-
-                mFinsihTime -= fixedDeltaTime;
-                if (mFinsihTime <= 0)
-                {
-                    DoDestroyAction();
-                    mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-                    mInstance.ValueRW.State = PokerGameState.End;
-                }
-            }
+            Dependency = animationJob.Schedule(PokerAnimationCData2Query, Dependency);
         }
         else if (mInstance.ValueRO.State == PokerGameState.End)
         {
@@ -120,74 +94,146 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
         }
     }
 
-    void updateAnimation(Entity mEntity, float dt)
+    [BurstCompile]
+    partial struct UpdateCardAnimationJob : IJobEntity
     {
-        var mPokerAnimationCData = SystemAPI.GetComponentRW<PokerAnimationCData2>(mEntity);
-        if (!mPokerAnimationCData.ValueRW.open)
+        public float DeltaTime;
+        public EntityCommandBuffer.ParallelWriter ECB;
+        private int entityIndexInQuery;
+
+        void Execute([EntityIndexInQuery] int entityIndexInQuery, 
+            ref PokerAnimationCData mPokerAnimationCData, 
+            ref LocalTransform mLocalTransform,
+            ref Entity mEntity)
         {
-            return;
+            this.entityIndexInQuery = entityIndexInQuery;
+
+            float d2 = DeltaTime;
+            float fixedDeltaTime = 0.01666f;
+            while (d2 > 0)
+            {
+                d2 -= fixedDeltaTime;
+                updateAnimation(fixedDeltaTime, 
+                    ref mPokerAnimationCData, 
+                    ref mLocalTransform, 
+                    ref mEntity);
+            }
         }
 
-        mPokerAnimationCData = SystemAPI.GetComponentRW<PokerAnimationCData2>(mEntity);
-        var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mEntity);
-        if (mPokerAnimationCData.ValueRW.trigger)
+        void updateAnimation(float dt, 
+            ref PokerAnimationCData mPokerAnimationCData, 
+            ref LocalTransform mLocalTransform,
+            ref Entity mEntity)
         {
-            var startPt = mPokerAnimationCData.ValueRW.nowPt;
-            var maxHeight = mPokerAnimationCData.ValueRW.maxHeight;
-            var toRight = mPokerAnimationCData.ValueRW.btoRight;
-            var vx_a = mPokerAnimationCData.ValueRW.vx_a;
-            var vy_a = mPokerAnimationCData.ValueRW.vy_a;
-            var nowPt = new Vector3(0, 0, 0);
-            // 匀变速直线运动位移公式：a=dv/dt，
-            // 距离 x = v0t+1/2·at^2
-
-            // 现在速度
-            mPokerAnimationCData.ValueRW.vx += vx_a * dt;
-            mPokerAnimationCData.ValueRW.vy += vy_a * dt;
-            var vx = mPokerAnimationCData.ValueRW.vx;
-            var vy = mPokerAnimationCData.ValueRW.vy;
-
-            nowPt.x = (float)(startPt.x + vx * dt + 0.5f * vx_a * dt * dt);
-            nowPt.y = (float)(startPt.y + vy * dt + 0.5f * vy_a * dt * dt);
-            nowPt.z = startPt.z;
-
-            // 垂直. 小于最低值。
-            if (nowPt.y < mPokerAnimationCData.ValueRW.minHeight)
+            if (!mPokerAnimationCData.open)
             {
-                nowPt.y = mPokerAnimationCData.ValueRW.minHeight;
-                mPokerAnimationCData.ValueRW.vy *= -0.95f;  //转变方向
+                return;
             }
-
-            if (nowPt.y > mPokerAnimationCData.ValueRW.maxHeight)
+            
+            if (mPokerAnimationCData.trigger)
             {
-                nowPt.y = mPokerAnimationCData.ValueRW.maxHeight;
-                mPokerAnimationCData.ValueRW.vy = 0;
-                mPokerAnimationCData.ValueRW.maxHeight = mPokerAnimationCData.ValueRW.maxHeight * 0.7f;
+                var startPt = mPokerAnimationCData.nowPt;
+                var maxHeight = mPokerAnimationCData.maxHeight;
+                var toRight = mPokerAnimationCData.btoRight;
+                var vx_a = mPokerAnimationCData.vx_a;
+                var vy_a = mPokerAnimationCData.vy_a;
+                var nowPt = new Vector3(0, 0, 0);
+                
+                mPokerAnimationCData.vx += vx_a * dt;
+                mPokerAnimationCData.vy += vy_a * dt;
+                var vx = mPokerAnimationCData.vx;
+                var vy = mPokerAnimationCData.vy;
+
+                nowPt.x = startPt.x + vx * dt + 0.5f * vx_a * dt * dt;
+                nowPt.y = startPt.y + vy * dt + 0.5f * vy_a * dt * dt;
+                nowPt.z = startPt.z;
+                
+                if (nowPt.y < mPokerAnimationCData.minHeight)
+                {
+                    nowPt.y = mPokerAnimationCData.minHeight;
+                    mPokerAnimationCData.vy *= -0.95f;
+                }
+
+                if (nowPt.y > mPokerAnimationCData.maxHeight)
+                {
+                    nowPt.y = mPokerAnimationCData.maxHeight;
+                    mPokerAnimationCData.vy = 0;
+                    mPokerAnimationCData.maxHeight = mPokerAnimationCData.maxHeight * 0.7f;
+                }
+                
+                mPokerAnimationCData.nowPt = nowPt;
+                mLocalTransform.Position = nowPt;
+
+                CloneFlyObj(mEntity);
+
+                if (Mathf.Abs(nowPt.x) > mPokerAnimationCData.maxWidth + 100)
+                {
+                    mPokerAnimationCData.open = false;
+                }
             }
-
-            // 每两帧之间 添加
-            mPokerAnimationCData.ValueRW.checktimes += 1;
-            mLocalTransform.ValueRW.Position = nowPt;
-            mPokerAnimationCData.ValueRW.nowPt = nowPt;
-
-            CloneFlyObj(mEntity);
-            mPokerAnimationCData = SystemAPI.GetComponentRW<PokerAnimationCData2>(mEntity);
-            if (Mathf.Abs(nowPt.x) > mPokerAnimationCData.ValueRW.maxWidth + 100)
+            else
             {
-                mPokerAnimationCData.ValueRW.open = false;
+                mPokerAnimationCData.triggerDelay -= dt;
+                if (mPokerAnimationCData.triggerDelay <= 0)
+                {
+                    mPokerAnimationCData.trigger = true;
+                    mLocalTransform.Scale = 0;
+                }
             }
         }
-        else
+
+        Entity addStaticCard(float3 pt, int colorType, int value)
         {
-            mPokerAnimationCData.ValueRW.triggerDelay -= dt;
-            if (mPokerAnimationCData.ValueRW.triggerDelay <= 0)
-            {
-                mPokerAnimationCData.ValueRW.trigger = true;
-                mLocalTransform.ValueRW.Scale = 0;
-            }
+            RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
+
+            Unity.Assertions.Assert.IsTrue(mInstance.ValueRO.Prefab != Entity.Null, "mInstance.Prefab == Entity.Null");
+            Entity mTargetEntity = EntityPoolManager.Instance.Spawn(mInstance.ValueRO.Prefab, PoolTagConst.Poker);
+            ECSHelper.AddMissComponentData<PokerItemCData>(EntityManager, mTargetEntity);
+            ECSHelper.AddMissComponentData<PokerAnimationCData2>(EntityManager, mTargetEntity);
+            ECSHelper.AddMissComponentData<Parent>(EntityManager, mTargetEntity);
+
+            ECB.AddComponent<PokerAnimationCData2>(this.entityIndexInQuery, mTargetEntity);
+            ECB.AddComponent<PokerAnimationCData2>(this.entityIndexInQuery, mTargetEntity);
+
+            var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mTargetEntity);
+            var mPokerItemCData = SystemAPI.GetComponentRW<PokerItemCData>(mTargetEntity);
+            var mParent = SystemAPI.GetComponentRW<Parent>(mTargetEntity);
+            mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
+            mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
+            mLocalTransform.ValueRW.Position = pt;
+            mLocalTransform.ValueRW.Scale = mInstance.ValueRW.worldScale_start_list[0].x;
+            initByNum(mTargetEntity, value, colorType);
+            return mTargetEntity;
+        }
+
+        private void CloneFlyObj(
+            ref Entity mEntry, 
+            ref PokerAnimationCData2 mPokerAnimationCData,
+            ref LocalTransform mLocalTransform)
+        {
+            Entity mObj = addStaticCard(
+                mLocalTransform.Position,
+                mPokerAnimationCData.color,
+                mPokerAnimationCData.value);
+
+            UpdatePokerSortingOrderInFly(mObj);
+            mTimerRemoveEntityList.Add(mObj);
+            ECB.AddComponent(entityIndexInQuery, mObj, new PokerTimerRemoveCData() { mRomveCdTime = 6.0f });
+        }
+
+        int nOrderId = 0;
+        public void UpdatePokerSortingOrderInFly(Entity mEntity_PokerItem)
+        {
+            var mData = new PokerItemCData();
+
+            var mEntity_Poker = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Sprite");
+            var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
+            var mSpriteRenderer1 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Poker);
+            var mSpriteRenderer2 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
+            mSpriteRenderer1.sortingOrder = nOrderId++ + 100;
+            mSpriteRenderer2.sortingOrder = 0;
         }
     }
-
 
     public void initByNum(Entity mEntity_PokerItem, int cardNum, int colorType)
     {
