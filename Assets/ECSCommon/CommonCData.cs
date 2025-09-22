@@ -35,3 +35,10 @@ public struct SpriteRendererCData : KKIComponentData
         SpriteRenderer m = gameObject.GetComponent<SpriteRenderer>();
     }
 }
+
+public struct TempSpriteRendererUpdateCData : IComponentData
+{
+    public int nOrderId;
+    public FixedString32Bytes atlasName;
+    public FixedString32Bytes spriteName;
+}

@@ -1,25 +1,29 @@
 using System;
 using Unity.Burst;
-using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.U2D;
+using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
 [RequireMatchingQueriesForUpdate]
 [BurstCompile]
 public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
 {
-    private EntityQuery StartDoAniEventQuery;
     private NativeList<Entity> mTimerRemoveEntityList;
     private float mFinsihTime = 0;
+
+    public partial struct SetPokerItemDataEvent : IComponentData
+    {
+
+    }
 
     protected override void OnCreate()
     {
         base.OnCreate();
-        StartDoAniEventQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<StartDoAniEvent>().Build(this);
         mTimerRemoveEntityList = new NativeList<Entity>(5, Allocator.Persistent);
     }
 
@@ -43,6 +47,12 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
     protected override void OnUpdate()
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
+
+        if(!SystemAPI.HasSingleton<PokerSystemSingleton>())
+        {
+            return;
+        }
+
         RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
         if(mInstance.ValueRO.nAniType != PokerAniType.FlyFullScreen3)
         {
@@ -57,6 +67,7 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
                 break;
             }
 
+            var StartDoAniEventQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<StartDoAniEvent>().Build(this);
             EntityManager.DestroyEntity(StartDoAniEventQuery);
         }
         else if (mInstance.ValueRO.State == PokerGameState.Start)
@@ -75,17 +86,42 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
         }
         else if (mInstance.ValueRO.State == PokerGameState.Playing)
         {
-            var PokerAnimationCData2Query = new EntityQueryBuilder(Allocator.Temp).WithAll<RefRW<PokerAnimationCData2>>().Build(this);
-            var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
+            EntityCommandBuffer ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
                               .CreateCommandBuffer(World.Unmanaged);
             
-            var animationJob = new UpdateCardAnimationJob()
+            var mJob1 = new UpdateCardAnimationJob()
             {
                 DeltaTime = deltaTime,
-                ECB = ecb.AsParallelWriter()
+                ECB = ecb.AsParallelWriter(),
+                Prefab = mInstance.ValueRO.Prefab,
+                Parent = mInstance.ValueRO.cardsNode,
+                OriScale = mInstance.ValueRO.worldScale_start_list[0]
             };
+            var mJobHandle1 = mJob1.ScheduleParallel(GetEntityQuery(typeof(PokerAnimationCData2), typeof(LocalTransform)), this.Dependency);
+            var mJob2 = new TimerRemoveJob()
+            {
+                DeltaTime = deltaTime,
+                ECB = ecb.AsParallelWriter(),
+            };
+            var mJobHandle2 = mJob2.ScheduleParallel(GetEntityQuery(typeof(PokerTimerRemoveCData), typeof(LocalTransform)), this.Dependency);
 
-            Dependency = animationJob.Schedule(PokerAnimationCData2Query, Dependency);
+            this.Dependency = JobHandle.CombineDependencies(mJobHandle1, mJobHandle2);
+            this.Dependency.Complete();
+            
+            EntityCommandBuffer ecb2 = new EntityCommandBuffer(Allocator.Temp);
+            foreach (var (mEvent, mPokerItemCData, mEntity) in SystemAPI.Query<RefRO<SetPokerItemDataEvent>, RefRO<PokerItemCData>>().WithEntityAccess())
+            {
+                ecb2.RemoveComponent<SetPokerItemDataEvent>(mEntity);
+                SetGameObjectSprite(mEntity, mPokerItemCData.ValueRO);
+            }
+
+            mFinsihTime -= deltaTime;
+            if (mFinsihTime <= 0)
+            {
+                DoDestroyAction();
+                mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
+                mInstance.ValueRW.State = PokerGameState.End;
+            }
         }
         else if (mInstance.ValueRO.State == PokerGameState.End)
         {
@@ -95,29 +131,21 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
     }
 
     [BurstCompile]
-    partial struct InitJob : IJobEntity
+    partial struct TimerRemoveJob : IJobEntity
     {
         public float DeltaTime;
         public EntityCommandBuffer.ParallelWriter ECB;
-        private int entityIndexInQuery;
 
-        void Execute([EntityIndexInQuery] int entityIndexInQuery,
-            ref PokerAnimationCData mPokerAnimationCData,
-            ref LocalTransform mLocalTransform,
-            ref Entity mEntity)
+        void Execute(
+            [EntityIndexInQuery] int entityIndexInQuery,
+            ref PokerTimerRemoveCData mPokerTimerRemoveCData,
+            Entity mEntity)
         {
-            //this.entityIndexInQuery = entityIndexInQuery;
-
-            //float d2 = DeltaTime;
-            //float fixedDeltaTime = 0.01666f;
-            //while (d2 > 0)
-            //{
-            //    d2 -= fixedDeltaTime;
-            //    updateAnimation(fixedDeltaTime,
-            //        ref mPokerAnimationCData,
-            //        ref mLocalTransform,
-            //        ref mEntity);
-            //}
+            mPokerTimerRemoveCData.mRomveCdTime -= DeltaTime;
+            if (mPokerTimerRemoveCData.mRomveCdTime <= 0)
+            {
+                ECB.DestroyEntity(entityIndexInQuery, mEntity);
+            }
         }
     }
 
@@ -126,29 +154,34 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
     {
         public float DeltaTime;
         public EntityCommandBuffer.ParallelWriter ECB;
-        private int entityIndexInQuery;
+        public Entity Prefab;
+        public Entity Parent;
+        public float3 OriScale;
 
-        void Execute([EntityIndexInQuery] int entityIndexInQuery, 
-            ref PokerAnimationCData mPokerAnimationCData, 
+        void Execute(
+            [EntityIndexInQuery] int entityIndexInQuery,
+            ref PokerAnimationCData2 mPokerAnimationCData,
             ref LocalTransform mLocalTransform,
-            ref Entity mEntity)
+            Entity mEntity)
         {
-            this.entityIndexInQuery = entityIndexInQuery;
-
             float d2 = DeltaTime;
             float fixedDeltaTime = 0.01666f;
             while (d2 > 0)
             {
                 d2 -= fixedDeltaTime;
-                updateAnimation(fixedDeltaTime, 
-                    ref mPokerAnimationCData, 
-                    ref mLocalTransform, 
+                updateAnimation(
+                    fixedDeltaTime,
+                    entityIndexInQuery,
+                    ref mPokerAnimationCData,
+                    ref mLocalTransform,
                     ref mEntity);
             }
         }
 
-        void updateAnimation(float dt, 
-            ref PokerAnimationCData mPokerAnimationCData, 
+        void updateAnimation(
+            float dt,
+            int entityIndexInQuery,
+            ref PokerAnimationCData2 mPokerAnimationCData,
             ref LocalTransform mLocalTransform,
             ref Entity mEntity)
         {
@@ -156,7 +189,7 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
             {
                 return;
             }
-            
+
             if (mPokerAnimationCData.trigger)
             {
                 var startPt = mPokerAnimationCData.nowPt;
@@ -165,7 +198,7 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
                 var vx_a = mPokerAnimationCData.vx_a;
                 var vy_a = mPokerAnimationCData.vy_a;
                 var nowPt = new Vector3(0, 0, 0);
-                
+
                 mPokerAnimationCData.vx += vx_a * dt;
                 mPokerAnimationCData.vy += vy_a * dt;
                 var vx = mPokerAnimationCData.vx;
@@ -174,7 +207,7 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
                 nowPt.x = startPt.x + vx * dt + 0.5f * vx_a * dt * dt;
                 nowPt.y = startPt.y + vy * dt + 0.5f * vy_a * dt * dt;
                 nowPt.z = startPt.z;
-                
+
                 if (nowPt.y < mPokerAnimationCData.minHeight)
                 {
                     nowPt.y = mPokerAnimationCData.minHeight;
@@ -187,11 +220,11 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
                     mPokerAnimationCData.vy = 0;
                     mPokerAnimationCData.maxHeight = mPokerAnimationCData.maxHeight * 0.7f;
                 }
-                
+
                 mPokerAnimationCData.nowPt = nowPt;
                 mLocalTransform.Position = nowPt;
 
-                CloneFlyObj(mEntity);
+                CloneFlyObj(entityIndexInQuery, ref mPokerAnimationCData, ref mLocalTransform);
 
                 if (Mathf.Abs(nowPt.x) > mPokerAnimationCData.maxWidth + 100)
                 {
@@ -209,53 +242,45 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
             }
         }
 
-        Entity addStaticCard(float3 pt, int colorType, int value)
-        {
-            RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-            Unity.Assertions.Assert.IsTrue(mInstance.ValueRO.Prefab != Entity.Null, "mInstance.Prefab == Entity.Null");
-
-            Entity mTargetEntity = ECB.Instantiate(entityIndexInQuery, mInstance.ValueRO.Prefab);
-            ECB.AddComponent<PokerItemCData>(this.entityIndexInQuery, mTargetEntity);
-            ECB.AddComponent<PokerAnimationCData2>(this.entityIndexInQuery, mTargetEntity);
-            ECB.AddComponent<Parent>(entityIndexInQuery, mTargetEntity);
-
-            var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mTargetEntity);
-            var mPokerItemCData = SystemAPI.GetComponentRW<PokerItemCData>(mTargetEntity);
-            var mParent = SystemAPI.GetComponentRW<Parent>(mTargetEntity);
-            mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-            mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
-
-            mLocalTransform.ValueRW.Position = pt;
-            mLocalTransform.ValueRW.Scale = mInstance.ValueRW.worldScale_start_list[0].x;
-            initByNum(mTargetEntity, value, colorType);
-            return mTargetEntity;
-        }
-
         private void CloneFlyObj(
-            ref Entity mEntry, 
-            ref PokerAnimationCData2 mPokerAnimationCData,
-            ref LocalTransform mLocalTransform)
+            int entityIndexInQuery,
+            ref PokerAnimationCData2 otherPokerAnimationCData,
+            ref LocalTransform otherLocalTransform)
         {
-            Entity mObj = addStaticCard(
-                mLocalTransform.Position,
-                mPokerAnimationCData.color,
-                mPokerAnimationCData.value);
+            Unity.Assertions.Assert.IsTrue(Prefab != Entity.Null, "Prefab == Entity.Null");
+            Unity.Assertions.Assert.IsTrue(Parent != Entity.Null, "Parent == Entity.Null");
 
-            ECB.AddComponent(entityIndexInQuery, mObj, new PokerTimerRemoveCData() { mRomveCdTime = 6.0f });
+            int colorType = otherPokerAnimationCData.color;
+            int cardNum = otherPokerAnimationCData.value;
+
+            Entity mTargetEntity = ECB.Instantiate(entityIndexInQuery, Prefab);
+
+            var mParent = new Parent();
+            mParent.Value = Parent;
+            ECB.AddComponent(entityIndexInQuery, mTargetEntity, mParent);
+
+            var mPokerItemCData = new PokerItemCData();
+            mPokerItemCData.color = colorType;
+            mPokerItemCData.cardNum = cardNum;
+            mPokerItemCData.nCardId = colorType * 13 + cardNum;
+            ECB.AddComponent(entityIndexInQuery, mTargetEntity, mPokerItemCData);
+
+            var mLocalTransform = new LocalTransform();
+            mLocalTransform.Position = otherLocalTransform.Position;
+            mLocalTransform.Rotation = quaternion.identity;
+            mLocalTransform.Scale = OriScale.x;
+            ECB.AddComponent(entityIndexInQuery, mTargetEntity, mLocalTransform);
+
+            ECB.AddComponent(entityIndexInQuery, mTargetEntity, new SetPokerItemDataEvent());
+            ECB.AddComponent(entityIndexInQuery, mTargetEntity, new PokerTimerRemoveCData() { mRomveCdTime = 6.0f });
         }
-
 
     }
 
-    public void initByNum(Entity mEntity_PokerItem, int cardNum, int colorType)
+    public void SetGameObjectSprite(Entity mEntity_PokerItem, PokerItemCData mData)
     {
-        var mData = SystemAPI.GetComponentRW<PokerItemCData>(mEntity_PokerItem);
-        mData.ValueRW.color = colorType;
-        mData.ValueRW.cardNum = cardNum;
-        mData.ValueRW.nCardId = colorType * 13 + cardNum;
-        
         SpriteAtlas atl_game = PokerGoMgr.Instance.mPokerAtlas;
-        string p_name = "di_" + cardNum + "_" + colorType;
+        string p_name = "di_" + mData.cardNum + "_" + mData.color;
         SpriteAtlas atl_game1 = PokerGoMgr.Instance.mPokerBackAtlas;
         string p_name_back = "cardback_1";
 
@@ -267,7 +292,7 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
         SpriteAtlas mSpriteAtlas = PokerGoMgr.Instance.mPokerAtlas;
         Sprite spri_bg = mSpriteAtlas.GetSprite(p_name);
         mSpriteRenderer1.sprite = spri_bg;
-        mSpriteRenderer1.sortingOrder = cardNum;
+        mSpriteRenderer1.sortingOrder = mData.cardNum;
 
         mSpriteAtlas = PokerGoMgr.Instance.mPokerAtlas;
         spri_bg = mSpriteAtlas.GetSprite(p_name_back);
@@ -383,7 +408,12 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
         mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
         mLocalTransform.ValueRW.Position = pt;
         mLocalTransform.ValueRW.Scale = mInstance.ValueRW.worldScale_start_list[0].x;
-        initByNum(mTargetEntity, value, colorType);
+
+        mPokerItemCData.ValueRW.cardNum = value;
+        mPokerItemCData.ValueRW.color = colorType;
+        mPokerItemCData.ValueRW.nCardId = colorType * 13 + value;
+
+        SetGameObjectSprite(mTargetEntity, mPokerItemCData.ValueRO);
         return mTargetEntity;
     }
 

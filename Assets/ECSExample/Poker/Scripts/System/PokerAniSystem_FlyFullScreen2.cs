@@ -22,7 +22,7 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
     {
         base.OnCreate();
         StartDoAniEventQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<StartDoAniEvent>().Build(this);
-        PokerAnimationCData2Query = new EntityQueryBuilder(Allocator.Temp).WithAll<RefRW<PokerAnimationCData2>>().Build(this);
+        PokerAnimationCData2Query = new EntityQueryBuilder(Allocator.Temp).WithAll<PokerAnimationCData2>().Build(this);
         mTimerRemoveEntityList = new NativeList<Entity>(5, Allocator.Persistent);
     }
 
@@ -104,7 +104,7 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
                     }
                 }
 
-                mFinsihTime -= fixedDeltaTime;
+                mFinsihTime -= deltaTime;
                 if (mFinsihTime <= 0)
                 {
                     DoDestroyAction();
