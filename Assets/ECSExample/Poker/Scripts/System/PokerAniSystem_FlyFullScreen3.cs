@@ -21,6 +21,11 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
 
     }
 
+    public partial struct SetPokerItemSortingOrderEvent : IComponentData
+    {
+
+    }
+
     protected override void OnCreate()
     {
         base.OnCreate();
@@ -110,8 +115,14 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
                 SetGameObjectSprite(mEntity, mPokerItemCData.ValueRO);
             }
 
+            foreach (var (mEvent, mPokerItemCData, mEntity) in SystemAPI.Query<RefRO<SetPokerItemSortingOrderEvent>, RefRO<PokerItemCData>>().WithEntityAccess())
+            {
+                UpdatePokerSortingOrderInFly(mEntity);
+            }
+
             EntityCommandBuffer ecb2 = new EntityCommandBuffer(Allocator.Temp);
             ecb2.RemoveComponent(GetEntityQuery(typeof(SetPokerItemDataEvent)), typeof(SetPokerItemDataEvent), EntityQueryCaptureMode.AtPlayback);
+            ecb2.RemoveComponent(GetEntityQuery(typeof(SetPokerItemSortingOrderEvent)), typeof(SetPokerItemSortingOrderEvent), EntityQueryCaptureMode.AtPlayback);
             ecb2.Playback(EntityManager);
 
             mFinsihTime -= deltaTime;
@@ -245,6 +256,7 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
                 {
                     mPokerAnimationCData.trigger = true;
                     mLocalTransform.Scale = 0;
+                    ECB.AddComponent(entityIndexInQuery, mEntity, new SetPokerItemSortingOrderEvent());
                 }
             }
         }
@@ -279,7 +291,7 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
             ECB.AddComponent(entityIndexInQuery, mTargetEntity, mLocalTransform);
 
             ECB.AddComponent(entityIndexInQuery, mTargetEntity, new SetPokerItemDataEvent());
-            ECB.AddComponent(entityIndexInQuery, mTargetEntity, new PokerTimerRemoveCData() { mRomveCdTime = 3.0f });
+            ECB.AddComponent(entityIndexInQuery, mTargetEntity, new PokerTimerRemoveCData() { mRomveCdTime = 6.0f });
         }
 
     }
