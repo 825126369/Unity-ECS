@@ -97,17 +97,16 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
                 Parent = mInstance.ValueRO.cardsNode,
                 OriScale = mInstance.ValueRO.worldScale_start_list[0]
             };
-            var mJobHandle1 = mJob1.ScheduleParallel(GetEntityQuery(typeof(PokerAnimationCData2), typeof(LocalTransform)), this.Dependency);
+            this.Dependency = mJob1.ScheduleParallel(GetEntityQuery(typeof(PokerAnimationCData2), typeof(LocalTransform)), this.Dependency);
+            this.Dependency.Complete();
             var mJob2 = new TimerRemoveJob()
             {
                 DeltaTime = deltaTime,
                 ECB = ecb.AsParallelWriter(),
             };
-            var mJobHandle2 = mJob2.ScheduleParallel(GetEntityQuery(typeof(PokerTimerRemoveCData), typeof(LocalTransform)), this.Dependency);
-
-            this.Dependency = JobHandle.CombineDependencies(mJobHandle1, mJobHandle2);
+            this.Dependency = mJob2.ScheduleParallel(GetEntityQuery(typeof(PokerTimerRemoveCData), typeof(LocalTransform)), this.Dependency);
             this.Dependency.Complete();
-            
+
             EntityCommandBuffer ecb2 = new EntityCommandBuffer(Allocator.Temp);
             foreach (var (mEvent, mPokerItemCData, mEntity) in SystemAPI.Query<RefRO<SetPokerItemDataEvent>, RefRO<PokerItemCData>>().WithEntityAccess())
             {
@@ -118,7 +117,7 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
             mFinsihTime -= deltaTime;
             if (mFinsihTime <= 0)
             {
-                DoDestroyAction();
+                DoDestroyAction(ref ecb2);
                 mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
                 mInstance.ValueRW.State = PokerGameState.End;
             }
@@ -272,7 +271,7 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
             ECB.AddComponent(entityIndexInQuery, mTargetEntity, mLocalTransform);
 
             ECB.AddComponent(entityIndexInQuery, mTargetEntity, new SetPokerItemDataEvent());
-            ECB.AddComponent(entityIndexInQuery, mTargetEntity, new PokerTimerRemoveCData() { mRomveCdTime = 6.0f });
+            ECB.AddComponent(entityIndexInQuery, mTargetEntity, new PokerTimerRemoveCData() { mRomveCdTime = 3.0f });
         }
 
     }
@@ -396,7 +395,8 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
         RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
 
         Unity.Assertions.Assert.IsTrue(mInstance.ValueRO.Prefab != Entity.Null, "mInstance.Prefab == Entity.Null");
-        Entity mTargetEntity = EntityPoolManager.Instance.Spawn(mInstance.ValueRO.Prefab, PoolTagConst.Poker);
+
+        Entity mTargetEntity = EntityManager.Instantiate(mInstance.ValueRO.Prefab);
         ECSHelper.AddMissComponentData<PokerItemCData>(EntityManager, mTargetEntity);
         ECSHelper.AddMissComponentData<PokerAnimationCData2>(EntityManager, mTargetEntity);
         ECSHelper.AddMissComponentData<Parent>(EntityManager, mTargetEntity);
@@ -404,6 +404,7 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
         var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mTargetEntity);
         var mPokerItemCData = SystemAPI.GetComponentRW<PokerItemCData>(mTargetEntity);
         var mParent = SystemAPI.GetComponentRW<Parent>(mTargetEntity);
+
         mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
         mParent.ValueRW.Value = mInstance.ValueRW.cardsNode;
         mLocalTransform.ValueRW.Position = pt;
@@ -417,32 +418,7 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
         return mTargetEntity;
     }
 
-    private void CloneFlyObj(Entity mEntry)
-    {
-        var mPokerAnimationCData = SystemAPI.GetComponentRO<PokerAnimationCData2>(mEntry);
-        var mLocalTransform = SystemAPI.GetComponentRO<LocalTransform>(mEntry);
-        Entity mObj = addStaticCard(mLocalTransform.ValueRO.Position, 
-            mPokerAnimationCData.ValueRO.color, 
-            mPokerAnimationCData.ValueRO.value);
-
-        UpdatePokerSortingOrderInFly(mObj);
-        mTimerRemoveEntityList.Add(mObj);
-        EntityManager.AddComponentData(mObj, new PokerTimerRemoveCData() { mRomveCdTime = 6.0f});
-    }
-
-    void onAnimatinCallBack()
-    {
-        PokerSystemSingleton mInstance = SystemAPI.GetSingleton<PokerSystemSingleton>();
-        mInstance.State = PokerGameState.End;
-
-        //if (this.callBack != null)
-        //{
-        //    this.callBack();
-        //    this.callBack = null;
-        //}
-    }
-
-    public void DoDestroyAction()
+    public void DoDestroyAction(ref EntityCommandBuffer ecb2)
     {
         RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
         if (mInstance.ValueRO.animationOver)
@@ -451,30 +427,8 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
         }
 
         mInstance.ValueRW.animationOver = true;
-        for (int index = 0; index < mInstance.ValueRO.allNodes.Length; index++)
-        {
-            var mEntity = mInstance.ValueRO.allNodes[index];
-            PokerAnimationCData2 mPokerAnimationCData = EntityManager.GetComponentData<PokerAnimationCData2>(mEntity);
-            mPokerAnimationCData.Reset();
-        }
-
-        foreach (var v in mInstance.ValueRO.allNodes)
-        {
-            EntityPoolManager.Instance.Recycle(v);
-        }
-
-        //上面回收的时候，有组件增删行为，发生结构性更改
-        mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-        mInstance.ValueRO.allNodes.Clear();
-        mInstance.ValueRO.colors.Dispose();
-
-        foreach (var v in mTimerRemoveEntityList)
-        {
-            var mEntity = v;
-            EntityManager.RemoveComponent<PokerTimerRemoveCData>(mEntity);
-            EntityPoolManager.Instance.Recycle(mEntity);
-        }
-        mTimerRemoveEntityList.Clear();
+        var entities = GetEntityQuery(ComponentType.ReadOnly<PokerItemCData>()).ToEntityArray(Allocator.Temp);
+        ecb2.DestroyEntity(entities);
     }
 
     public void onClick_Skip()
