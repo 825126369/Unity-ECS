@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -13,7 +14,6 @@ using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 [BurstCompile]
 public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
 {
-    private NativeList<Entity> mTimerRemoveEntityList;
     private float mFinsihTime = 0;
 
     public partial struct SetPokerItemDataEvent : IComponentData
@@ -24,13 +24,11 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
     protected override void OnCreate()
     {
         base.OnCreate();
-        mTimerRemoveEntityList = new NativeList<Entity>(5, Allocator.Persistent);
     }
 
     protected override void OnDestroy()
     {
         base.OnDestroy();
-        mTimerRemoveEntityList.Dispose();
     }
 
     protected override void OnStartRunning()
@@ -107,17 +105,18 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
             this.Dependency = mJob2.ScheduleParallel(GetEntityQuery(typeof(PokerTimerRemoveCData), typeof(LocalTransform)), this.Dependency);
             this.Dependency.Complete();
 
-            EntityCommandBuffer ecb2 = new EntityCommandBuffer(Allocator.Temp);
             foreach (var (mEvent, mPokerItemCData, mEntity) in SystemAPI.Query<RefRO<SetPokerItemDataEvent>, RefRO<PokerItemCData>>().WithEntityAccess())
             {
-                ecb2.RemoveComponent<SetPokerItemDataEvent>(mEntity);
                 SetGameObjectSprite(mEntity, mPokerItemCData.ValueRO);
             }
+
+            EntityCommandBuffer ecb2 = new EntityCommandBuffer(Allocator.Temp);
+            ecb2.RemoveComponent(GetEntityQuery(typeof(SetPokerItemDataEvent)), typeof(SetPokerItemDataEvent), EntityQueryCaptureMode.AtPlayback);
+            ecb2.Playback(EntityManager);
 
             mFinsihTime -= deltaTime;
             if (mFinsihTime <= 0)
             {
-                DoDestroyAction(ref ecb2);
                 mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
                 mInstance.ValueRW.State = PokerGameState.End;
             }
@@ -126,6 +125,15 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
         {
             mInstance.ValueRW.State = PokerGameState.None;
             UnityMainThreadDispatcher.Instance.Fire(PokerECSEvent.PokerAniFinish);
+
+            EntityCommandBuffer ecb2 = new EntityCommandBuffer(Allocator.Temp);
+            var mEntityList = GetEntityQuery(typeof(PokerItemCData)).ToEntityArray(Allocator.Temp);//这里的查询 由于是下一帧，缓存更新了
+            foreach (var v in mEntityList)
+            {
+                ecb2.DestroyEntity(v);
+            }
+
+            ecb2.Playback(EntityManager);
         }
     }
 
@@ -416,19 +424,6 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
 
         SetGameObjectSprite(mTargetEntity, mPokerItemCData.ValueRO);
         return mTargetEntity;
-    }
-
-    public void DoDestroyAction(ref EntityCommandBuffer ecb2)
-    {
-        RefRW<PokerSystemSingleton> mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
-        if (mInstance.ValueRO.animationOver)
-        {
-            return;
-        }
-
-        mInstance.ValueRW.animationOver = true;
-        var entities = GetEntityQuery(ComponentType.ReadOnly<PokerItemCData>()).ToEntityArray(Allocator.Temp);
-        ecb2.DestroyEntity(entities);
     }
 
     public void onClick_Skip()
