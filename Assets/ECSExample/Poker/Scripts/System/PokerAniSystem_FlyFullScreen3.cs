@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Xml;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -256,7 +257,6 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
                 {
                     mPokerAnimationCData.trigger = true;
                     mLocalTransform.Scale = 0;
-                    ECB.AddComponent(entityIndexInQuery, mEntity, new SetPokerItemSortingOrderEvent());
                 }
             }
         }
@@ -292,6 +292,7 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
 
             ECB.AddComponent(entityIndexInQuery, mTargetEntity, new SetPokerItemDataEvent());
             ECB.AddComponent(entityIndexInQuery, mTargetEntity, new PokerTimerRemoveCData() { mRomveCdTime = 6.0f });
+            ECB.AddComponent(entityIndexInQuery, mTargetEntity, new SetPokerItemSortingOrderEvent());
         }
 
     }
