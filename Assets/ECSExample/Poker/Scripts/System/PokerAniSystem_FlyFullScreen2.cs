@@ -64,6 +64,8 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
         }
         else if (mInstance.ValueRO.State == PokerGameState.Start)
         {
+            mFinsihTime = 6.0f;
+            nOrderId = 0;
             Debug.Log($"PokerAniSystem OnUpdate - Frame: {UnityEngine.Time.frameCount}");
             NativeArray<int> colors = new NativeArray<int>(4, Allocator.Persistent);
             colors[0] = 1;
@@ -74,7 +76,6 @@ public partial class PokerAniSystem_FlyFullScreen2 : SystemBase
 
             mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
             mInstance.ValueRW.State = PokerGameState.Playing;
-            mFinsihTime = 6.0f;
         }
         else if (mInstance.ValueRO.State == PokerGameState.Playing)
         {

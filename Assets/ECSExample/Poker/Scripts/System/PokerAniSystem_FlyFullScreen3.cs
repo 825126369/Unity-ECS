@@ -76,6 +76,8 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
         }
         else if (mInstance.ValueRO.State == PokerGameState.Start)
         {
+            mFinsihTime = 6.0f;
+            nOrderId = 0;
             Debug.Log($"PokerAniSystem OnUpdate - Frame: {UnityEngine.Time.frameCount}");
             NativeArray<int> colors = new NativeArray<int>(4, Allocator.Persistent);
             colors[0] = 1;
@@ -86,10 +88,19 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
 
             mInstance = SystemAPI.GetSingletonRW<PokerSystemSingleton>();
             mInstance.ValueRW.State = PokerGameState.Playing;
-            mFinsihTime = 6.0f;
         }
         else if (mInstance.ValueRO.State == PokerGameState.Playing)
         {
+            foreach (var (mEvent, mPokerItemCData, mEntity) in SystemAPI.Query<RefRO<SetPokerItemDataEvent>, RefRO<PokerItemCData>>().WithEntityAccess())
+            {
+                SetGameObjectSprite(mEntity, mPokerItemCData.ValueRO);
+            }
+
+            foreach (var (mEvent, mPokerItemCData, mEntity) in SystemAPI.Query<RefRO<SetPokerItemSortingOrderEvent>, RefRO<PokerItemCData>>().WithEntityAccess())
+            {
+                UpdatePokerSortingOrderInFly(mEntity);
+            }
+
             EntityCommandBuffer ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
                               .CreateCommandBuffer(World.Unmanaged);
             
@@ -110,16 +121,6 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
             };
             this.Dependency = mJob2.ScheduleParallel(GetEntityQuery(typeof(PokerTimerRemoveCData), typeof(LocalTransform)), this.Dependency);
             this.Dependency.Complete();
-
-            foreach (var (mEvent, mPokerItemCData, mEntity) in SystemAPI.Query<RefRO<SetPokerItemDataEvent>, RefRO<PokerItemCData>>().WithEntityAccess())
-            {
-                SetGameObjectSprite(mEntity, mPokerItemCData.ValueRO);
-            }
-
-            foreach (var (mEvent, mPokerItemCData, mEntity) in SystemAPI.Query<RefRO<SetPokerItemSortingOrderEvent>, RefRO<PokerItemCData>>().WithEntityAccess())
-            {
-                UpdatePokerSortingOrderInFly(mEntity);
-            }
 
             EntityCommandBuffer ecb2 = new EntityCommandBuffer(Allocator.Temp);
             ecb2.RemoveComponent(GetEntityQuery(typeof(SetPokerItemDataEvent)), typeof(SetPokerItemDataEvent), EntityQueryCaptureMode.AtPlayback);
@@ -319,6 +320,7 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
         mSpriteRenderer2.sprite = spri_bg;
         mSpriteRenderer2.sortingOrder = 0;
 
+        Unity.Assertions.Assert.IsTrue(mSpriteRenderer1.sortingOrder < 14, "mSpriteRenderer1.sortingOrder: " + mSpriteRenderer1.sortingOrder);
         this.onSetNormal(mEntity_PokerItem);
     }
 
@@ -332,6 +334,8 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
         var mSpriteRenderer2 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
         mSpriteRenderer1.sortingOrder = nOrderId++ + 100;
         mSpriteRenderer2.sortingOrder = 0;
+
+        Unity.Assertions.Assert.IsTrue(mSpriteRenderer1.sortingOrder >= 100, "mSpriteRenderer1.sortingOrder: " + mSpriteRenderer1.sortingOrder);
     }
     
     void onSetBack(Entity mEntity_PokerItem)
@@ -407,7 +411,6 @@ public partial class PokerAniSystem_FlyFullScreen3 : SystemBase
         }
 
         mPokerAnimationCData.ValueRW.vy_a = PokerAnimationCData2.randomVy_a();
-        mInstance.ValueRW.allNodes.Add(mEntity);
     }
 
     // 检查是否最后一个队列中的最后一个，标志动画结束。   
