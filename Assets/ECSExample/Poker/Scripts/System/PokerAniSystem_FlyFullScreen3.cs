@@ -1,15 +1,11 @@
 using System;
-using System.Linq;
-using System.Xml;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.U2D;
-using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
 [RequireMatchingQueriesForUpdate]
 [BurstCompile]
