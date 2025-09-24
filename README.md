@@ -11,7 +11,7 @@ DOTS 的基础设施：
 2：SubScene 
 (1) SubScene 是 Authoring(创作) 的容器/舞台/编辑器，顾名思义: SubScene 就是 在GameObject世界里进行创作，通过在编译阶段烘培为 Entity世界。游戏启动后，创作阶段的GameObject世界全都会被Skip掉. 所以 SubScene 下面的所有GameObject 在运行阶段都不会执行 Awake, Start 这些生命周期函数，因为 这些GameObject 都被忽略掉了。
 (2) Authoring 脚本（进行烘培Bake的脚本）只局限于 GameObject 本身， 不能在脚本中对他的子物体进行遍历添加IComponentData。 比如这个PokerItemObj，得专门在他的每个需要操作的子节点上 都加上相应的 Authoring 脚本。
-(3) 错误的添加SubScene操作，会导致Entity没渲染出来, 看不见。  SubScene 需要点击 New Sub Scene 创建，在GameObjct上手动添加 SubScene脚本 会有问题。
+(3) 错误的添加SubScene操作，会导致Entity没渲染出来, 看不见。  SubScene 需要点击 New Sub Scene 创建，在GameObject上手动添加 SubScene脚本 会有问题。
 
 3：实际ECS 逻辑：空当接龙案例
 (1) OnUpdate  一帧内可能被调度了多次（查询变更、内部触发) 
