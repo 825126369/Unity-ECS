@@ -60,7 +60,7 @@ DOTS 的基础设施：
 4: Entity 本身是一个“稳定句柄”（stable handle），即使发生结构性变更（如添加/删除组件、原型变更），Entity 的值（Index + Version）仍然有效，不会“失效”或“悬空”
 
 5: Hybrid方式：“混合模式”。
-即实体（Entity）只负责位置、动画等逻辑, 渲染交给 GameObject 系统. 通过 UnityObjectRef<GameObject> 字段, 来与GameObject 世界中的物体进行交互。虽然不是纯 ECS，但能利用 ECS 的性能优势。
+即实体（Entity）只负责位置、动画等逻辑, 渲染交给 GameObject 系统. 通过 SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>() 相关API, 来与GameObject 世界中的物体进行交互。虽然不是纯 ECS，但能利用 ECS 的性能优势。
 空当接龙中， 如何获取Entity的UI渲染组件或SpriteRenderer组件，（现在官方还没有）。 要么通过MeshRenderer 写一套类似 SpriteRenderer的组件，要么就是用Hybrid混合模式。
 
 6: EntityCommandBuffer ecb2 = new EntityCommandBuffer(Allocator.Temp)：
