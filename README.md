@@ -59,16 +59,17 @@ DOTS 的基础设施：
 
 4: Entity 本身是一个“稳定句柄”（stable handle），即使发生结构性变更（如添加/删除组件、原型变更），Entity 的值（Index + Version）仍然有效，不会“失效”或“悬空”
 
-5: Hybrid方式：“混合模式”。
-即实体（Entity）只负责位置、动画等逻辑, 渲染交给 GameObject 系统. 通过 SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>() 相关API, 来与GameObject 世界中的物体进行交互。虽然不是纯 ECS，但能利用 ECS 的性能优势。
-空当接龙中， 如何获取Entity的UI渲染组件或SpriteRenderer组件，（现在官方还没有）。 要么通过MeshRenderer 写一套类似 SpriteRenderer的组件，要么就是用Hybrid混合模式。
-
-6: EntityCommandBuffer ecb2 = new EntityCommandBuffer(Allocator.Temp)：
+5: EntityCommandBuffer ecb2 = new EntityCommandBuffer(Allocator.Temp)：
 必须手动 ecb2.Playback(EntityManager); 否则不执行
 EntityCommandBuffer ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
 自动执行，自动释放。
 
-7: LocalToWorld.Position	世界坐标（World Space）	从局部 → 世界变换后的最终位置
+6: LocalToWorld.Position	世界坐标（World Space）	从局部 → 世界变换后的最终位置
 LocalTransform.Position	局部坐标（Local Space）	相对于父节点的位置（若无父节点，则等同世界坐标）
 
-8: Data 如果包含 NativeList 等相关集合，不能用于GameObject烘培, 但能用于单例。
+7: Data 如果包含 NativeList 等相关集合，不能用于GameObject烘培, 但能用于单例。
+
+8: Hybrid方式：“混合模式”。
+即实体（Entity）只负责位置、动画等逻辑, 渲染交给 GameObject 系统. 通过 SystemAPI.ManagedAPI.GetComponent(typeof(SpriteRenderer)) 相关类似API, 来与GameObject 世界中的物体进行交互。虽然不是纯 ECS，但能利用 ECS 的性能优势。
+
+9:纯ECS渲染 (找到工作后，闲暇时间，给小伙伴补上) (也是一件很轻松的活，估计你也会)
