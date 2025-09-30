@@ -72,3 +72,5 @@ LocalTransform.Position	局部坐标（Local Space）	相对于父节点的位�
 即实体（Entity）只负责位置、动画等逻辑, 渲染交给 GameObject 系统. 通过 SystemAPI.ManagedAPI.GetComponent(typeof(SpriteRenderer)) 相关类似API, 来与GameObject 世界中的物体进行交互。虽然不是纯 ECS，但能利用 ECS 的性能优势。
 
 9:纯ECS渲染 (找到工作后，闲暇时间，给小伙伴补上) (也是一件很轻松的活，估计你也会)
+
+10：DOTS 暂时没找到能很好热更的方法。
