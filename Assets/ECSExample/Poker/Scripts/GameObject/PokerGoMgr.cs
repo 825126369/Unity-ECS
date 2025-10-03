@@ -7,6 +7,7 @@ public class PokerGoMgr : SingleTonMonoBehaviour<PokerGoMgr>
 {
     public SpriteAtlas mPokerAtlas;
     public SpriteAtlas mPokerBackAtlas;
+    public Material mPokerMaterial;
 
     public Canvas mCanvas;
     public GameObject startPt_obj1;

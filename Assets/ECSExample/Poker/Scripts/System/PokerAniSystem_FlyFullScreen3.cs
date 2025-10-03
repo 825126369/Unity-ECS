@@ -1,11 +1,16 @@
 using System;
+using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Entities.Graphics;
 using Unity.Mathematics;
+using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.U2D;
+using UnityEngine.XR;
 
 [RequireMatchingQueriesForUpdate]
 [BurstCompile]
