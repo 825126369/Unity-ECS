@@ -1,16 +1,11 @@
 using System;
-using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Entities.Graphics;
 using Unity.Mathematics;
-using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.U2D;
-using UnityEngine.XR;
 
 [RequireMatchingQueriesForUpdate]
 [BurstCompile]
@@ -292,10 +287,6 @@ public partial class PokerAniSystem_FlyFullScreen4 : SystemBase
             mLocalTransform.Scale = OriScale.x;
             ECB.AddComponent(entityIndexInQuery, mTargetEntity, mLocalTransform);
 
-            ECB.AddComponent<Material_Color_CData>(entityIndexInQuery, mTargetEntity);
-            ECB.AddComponent<Material_MainTex_CData>(entityIndexInQuery, mTargetEntity);
-            ECB.AddComponent<Material_MainTex_ST_CData>(entityIndexInQuery, mTargetEntity);
-
             ECB.AddComponent(entityIndexInQuery, mTargetEntity, new SetPokerItemDataEvent());
             ECB.AddComponent(entityIndexInQuery, mTargetEntity, new PokerTimerRemoveCData() { mRomveCdTime = 6.0f });
             ECB.AddComponent(entityIndexInQuery, mTargetEntity, new SetPokerItemSortingOrderEvent());
@@ -309,9 +300,24 @@ public partial class PokerAniSystem_FlyFullScreen4 : SystemBase
         string p_name = "di_" + mData.cardNum + "_" + mData.color;
         SpriteAtlas atl_game1 = PokerGoMgr.Instance.mPokerBackAtlas;
         string p_name_back = "cardback_1";
+        SpriteAtlas mSpriteAtlas = PokerGoMgr.Instance.mPokerAtlas;
+        Sprite spri_bg = mSpriteAtlas.GetSprite(p_name);
 
         var mEntity_Poker = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Sprite");
         var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
+        Unity.Assertions.Assert.IsTrue(mEntity_Poker != null, "mEntity_Poker == null");
+        Unity.Assertions.Assert.IsTrue(mEntity_Back != null, "mEntity_Back == null");
+
+
+        Vector4 A = UnityEngine.Sprites.DataUtility.GetInnerUV(spri_bg);
+        Debug.Log("GetInnerUV: " + A);
+
+        EntityManager.SetComponentData(mEntity_Poker, new Material_MainTex_CData() { Value = spri_bg.texture });
+        EntityManager.SetComponentData(mEntity_Poker, new Material_MainTex_ST_CData()
+        {
+            Value = UnityEngine.Sprites.DataUtility.GetInnerUV(spri_bg)
+        });
+        
         //var mSpriteRenderer1 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Poker);
         //var mSpriteRenderer2 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
 
@@ -333,7 +339,7 @@ public partial class PokerAniSystem_FlyFullScreen4 : SystemBase
         //    mesh = _quadMesh,
         //    material = _sharedMaterial,  // ✅ 共享材质
         //    sprite = playerSprite        // ✅ 不同图片
-             
+
         //});
     }
 

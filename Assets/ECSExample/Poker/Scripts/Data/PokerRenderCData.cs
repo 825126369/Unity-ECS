@@ -9,7 +9,7 @@ public struct PokerRenderCData : IComponentData
     //public Vector2 Size;
 }
 
-[MaterialProperty("_Color")]
+[MaterialProperty("_BaseColor")]
 public struct Material_Color_CData : IComponentData
 {
     public float4 Value;
