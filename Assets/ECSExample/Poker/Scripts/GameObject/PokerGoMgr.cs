@@ -8,6 +8,7 @@ public class PokerGoMgr : SingleTonMonoBehaviour<PokerGoMgr>
     public SpriteAtlas mPokerAtlas;
     public SpriteAtlas mPokerBackAtlas;
     public Material mPokerMaterial;
+    public Sprite mSprite;
 
     public Canvas mCanvas;
     public GameObject startPt_obj1;
@@ -26,6 +27,7 @@ public class PokerGoMgr : SingleTonMonoBehaviour<PokerGoMgr>
         GetScreenCornersWorldPoints();
         EntityManager mEntityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         Entity QueryEntity = mEntityManager.CreateEntity(typeof(PokerGoMgrInitFinishEvent));
+        mPokerMaterial.SetTexture("_MainTex", mSprite.texture);
     }
 
     private Entity FindMyEntity()

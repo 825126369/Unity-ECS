@@ -1,4 +1,6 @@
+using System.Globalization;
 using Unity.Entities;
+using Unity.Rendering;
 using UnityEngine;
 
 //ÆË¿ËÅÆ Image ºæÅàÆ÷

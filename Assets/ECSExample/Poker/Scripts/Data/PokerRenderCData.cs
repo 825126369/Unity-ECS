@@ -9,22 +9,28 @@ public struct PokerRenderCData : IComponentData
     //public Vector2 Size;
 }
 
-[MaterialProperty("_BaseColor")]
+[MaterialProperty("_MainTex")]
 public struct Material_Color_CData : IComponentData
 {
     public float4 Value;
 }
 
-[MaterialProperty("_BaseMap")]
+[MaterialProperty("_MainTex")]
 public struct Material_MainTex_CData : IComponentData
 {
     public UnityObjectRef<Texture2D> Value;
 }
 
-[MaterialProperty("_BaseMap_ST")]
+[MaterialProperty("_MainTex_ST")]
 public struct Material_MainTex_ST_CData : IComponentData
 {
     public float4 Value;
+}
+
+[MaterialProperty("_SortingOrder")]
+public struct MaterialSortingOrder : IComponentData
+{
+    public ushort Value;
 }
 
 

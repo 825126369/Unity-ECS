@@ -1,16 +1,20 @@
 using System;
+using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.U2D;
 
 [RequireMatchingQueriesForUpdate]
 [BurstCompile]
 public partial class PokerAniSystem_FlyFullScreen4 : SystemBase
 {
+    private Dictionary<Material, BatchMaterialID> m_MaterialMapping;
     private float mFinsihTime = 0;
 
     public partial struct SetPokerItemDataEvent : IComponentData
@@ -23,6 +27,7 @@ public partial class PokerAniSystem_FlyFullScreen4 : SystemBase
 
     }
 
+
     protected override void OnCreate()
     {
         base.OnCreate();
@@ -33,10 +38,17 @@ public partial class PokerAniSystem_FlyFullScreen4 : SystemBase
         base.OnDestroy();
     }
 
+    private void RegisterMaterial(EntitiesGraphicsSystem hybridRendererSystem, Material material)
+    {
+        // Only register each mesh once, so we can also unregister each mesh just once
+        if (!m_MaterialMapping.ContainsKey(material))
+            m_MaterialMapping[material] = hybridRendererSystem.RegisterMaterial(material);
+    }
+
     protected override void OnStartRunning()
     {
-        base.OnStartRunning();
-        //如果系统中途被 Enabled = false，再设为 true，它会再次调用； 类似 MonoBehaviour.Enable
+        var hybridRenderer = World.GetOrCreateSystemManaged<EntitiesGraphicsSystem>();
+        m_MaterialMapping = new Dictionary<Material, BatchMaterialID>();
     }
 
     protected override void OnStopRunning()
@@ -308,16 +320,22 @@ public partial class PokerAniSystem_FlyFullScreen4 : SystemBase
         Unity.Assertions.Assert.IsTrue(mEntity_Poker != null, "mEntity_Poker == null");
         Unity.Assertions.Assert.IsTrue(mEntity_Back != null, "mEntity_Back == null");
 
+        float2 scale = new float2(spri_bg.textureRect.width / spri_bg.texture.width,
+            spri_bg.textureRect.height / spri_bg.texture.height);
 
-        Vector4 A = UnityEngine.Sprites.DataUtility.GetInnerUV(spri_bg);
-        Debug.Log("GetInnerUV: " + A);
+        float2 uvOffset = new float2(spri_bg.textureRect.x / spri_bg.texture.width,
+            spri_bg.textureRect.y / spri_bg.texture.height);
 
-        EntityManager.SetComponentData(mEntity_Poker, new Material_MainTex_CData() { Value = spri_bg.texture });
         EntityManager.SetComponentData(mEntity_Poker, new Material_MainTex_ST_CData()
         {
-            Value = UnityEngine.Sprites.DataUtility.GetInnerUV(spri_bg)
+            Value = new float4(scale, uvOffset)
         });
-        
+
+        EntityManager.SetComponentData(mEntity_Poker, new Material_Color_CData()
+        {
+            Value = new float4(1, 1, 1, 1)
+        });
+
         //var mSpriteRenderer1 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Poker);
         //var mSpriteRenderer2 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
 
@@ -346,15 +364,14 @@ public partial class PokerAniSystem_FlyFullScreen4 : SystemBase
     int nOrderId = 0;
     public void UpdatePokerSortingOrderInFly(Entity mEntity_PokerItem)
     {
-        //var mData = SystemAPI.GetComponentRW<PokerItemCData>(mEntity_PokerItem);
-        //var mEntity_Poker = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Sprite");
-        //var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
-        //var mSpriteRenderer1 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Poker);
-        //var mSpriteRenderer2 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
-        //mSpriteRenderer1.sortingOrder = nOrderId++ + 100;
-        //mSpriteRenderer2.sortingOrder = 0;
-
-        //Unity.Assertions.Assert.IsTrue(mSpriteRenderer1.sortingOrder >= 100, "mSpriteRenderer1.sortingOrder: " + mSpriteRenderer1.sortingOrder);
+        var mData = SystemAPI.GetComponentRW<PokerItemCData>(mEntity_PokerItem);
+        var mEntity_Poker = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Sprite");
+        var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
+        var mSpriteRenderer1 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Poker);
+        var mSpriteRenderer2 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
+        mSpriteRenderer1.sortingOrder = nOrderId++ + 100;
+        mSpriteRenderer2.sortingOrder = 0;
+        Unity.Assertions.Assert.IsTrue(mSpriteRenderer1.sortingOrder >= 100, "mSpriteRenderer1.sortingOrder: " + mSpriteRenderer1.sortingOrder);
     }
     
     void onSetBack(Entity mEntity_PokerItem)

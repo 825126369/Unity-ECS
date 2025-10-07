@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
@@ -6,6 +7,8 @@ public class PokerPoolAuthoring : MonoBehaviour
 {
     public GameObject goPrefab;
     public int nPoolCount = 100;
+    public List<Material> m_MaterialList;
+    public List<Mesh> m_MeshList;
 
     class mBaker : Baker<PokerPoolAuthoring>
     {
@@ -27,5 +30,6 @@ public struct PokerPoolCData: IComponentData
 {
     public Entity Prefab;
     public int Count;
+
 }
 

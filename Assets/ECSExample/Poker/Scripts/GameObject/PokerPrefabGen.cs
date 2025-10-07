@@ -48,6 +48,6 @@ public class PokerPrefabGen : MonoBehaviour
 
         mPrefab = prototype;
 
-        Debug.Log("mPrefab: " + entityManager.GetName(mPrefab));
+        Debug.Log("mPrefab: " + entityManager.GetName(prototype));
     }
 }
