@@ -9,6 +9,7 @@ using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.U2D;
+using static UnityEngine.EventSystems.EventTrigger;
 
 [RequireMatchingQueriesForUpdate]
 [BurstCompile]
@@ -147,14 +148,20 @@ public partial class PokerAniSystem_FlyFullScreen4 : SystemBase
             mInstance.ValueRW.State = PokerGameState.None;
             UnityMainThreadDispatcher.Instance.Fire(PokerECSEvent.PokerAniFinish);
 
-            EntityCommandBuffer ecb2 = new EntityCommandBuffer(Allocator.Temp);
-            var mEntityList = GetEntityQuery(typeof(PokerItemCData)).ToEntityArray(Allocator.Temp);//这里的查询 由于是下一帧，缓存更新了
+            EntityCommandBuffer ecb2 = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(World.Unmanaged);
+            var mEntityList = GetEntityQuery(typeof(RenderMeshArray)).ToEntityArray(Allocator.Temp);//这里的查询 由于是下一帧，缓存更新了
             foreach (var v in mEntityList)
             {
                 ecb2.DestroyEntity(v);
             }
 
-            ecb2.Playback(EntityManager);
+            mEntityList = GetEntityQuery(typeof(PokerItemCData)).ToEntityArray(Allocator.Temp);//这里的查询 由于是下一帧，缓存更新了
+            foreach (var v in mEntityList)
+            {
+                ecb2.DestroyEntity(v);
+            }
+
+            
         }
     }
 
@@ -361,17 +368,15 @@ public partial class PokerAniSystem_FlyFullScreen4 : SystemBase
         //});
     }
 
-    int nOrderId = 0;
+    float nOrderId = 0;
     public void UpdatePokerSortingOrderInFly(Entity mEntity_PokerItem)
     {
-        var mData = SystemAPI.GetComponentRW<PokerItemCData>(mEntity_PokerItem);
-        var mEntity_Poker = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Sprite");
-        //var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
-        //var mSpriteRenderer1 = SystemAPI.ManagedAPI.GetComponent<MeshRenderer>(mEntity_Poker);
-        //var mSpriteRenderer2 = SystemAPI.ManagedAPI.GetComponent<MeshRenderer>(mEntity_Back);
-        //mSpriteRenderer1.sortingOrder = nOrderId++ + 100;
-        //mSpriteRenderer2.sortingOrder = 0;
-        //Unity.Assertions.Assert.IsTrue(mSpriteRenderer1.sortingOrder >= 100, "mSpriteRenderer1.sortingOrder: " + mSpriteRenderer1.sortingOrder);
+        var mLocalTransform = SystemAPI.GetComponentRW<LocalTransform>(mEntity_PokerItem);
+        float3 oriPos = mLocalTransform.ValueRW.Position;
+
+        float Z = -nOrderId * 0.001f + oriPos.z;
+        nOrderId++;
+        mLocalTransform.ValueRW.Position = new float3(oriPos.x, oriPos.y, Z);
     }
     
     void onSetBack(Entity mEntity_PokerItem)

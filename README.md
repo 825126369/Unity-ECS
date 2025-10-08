@@ -85,3 +85,6 @@ CBUFFER_END
 (2) 如何设置层级 ？
 对于3D物体的Order值，可以修改Z值。 默认是Z值 从前往后渲染
 对于2D物体（扑克牌）的Order值，Z值一样了，那么该如何渲染呢？（待思考）
+一种方法是轻微修改z值，比如间隔 0.001f
+
+(3) URP 2D Renderer 出现一个问题：一旦绘制后，图像一直驻留在屏幕上。解决方法：Camera 中的 Environment 选项框下的 Background 选项，切换为 Solid Color.
