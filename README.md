@@ -71,6 +71,17 @@ LocalTransform.Position	局部坐标（Local Space）	相对于父节点的位�
 8: Hybrid方式：“混合模式”。
 即实体（Entity）只负责位置、动画等逻辑, 渲染交给 GameObject 系统. 通过 SystemAPI.ManagedAPI.GetComponent(typeof(SpriteRenderer)) 相关类似API, 来与GameObject 世界中的物体进行交互。虽然不是纯 ECS，但能利用 ECS 的性能优势。
 
-9:纯ECS渲染 (找到工作后，闲暇时间，给小伙伴补上) (也是一件很轻松的活，估计你也会)
+9：DOTS 暂时没找到能很好热更的方法。(包括 HybridCLR 热更新)
 
-10：DOTS 暂时没找到能很好热更的方法。
+
+10:纯ECS渲染，使用MeshRenderer + 自定义Mesh 遇到的问题如下：
+（1）如何设置材质的纹理，属性？ 通过: MaterialProperty("_MainTex") 这个C# 特性，并且Shader 中的属性得加在 CBUFFER_STAR(UnityPerMaterial) 这个定义中。类似这样的：
+
+CBUFFER_START(UnityPerMaterial)
+float4 _Color;
+float4 _MainTex_ST;
+CBUFFER_END
+
+(2) 如何设置层级 ？
+对于3D物体的Order值，可以修改Z值。 默认是Z值 从前往后渲染
+对于2D物体（扑克牌）的Order值，Z值一样了，那么该如何渲染呢？（待思考）

@@ -366,12 +366,12 @@ public partial class PokerAniSystem_FlyFullScreen4 : SystemBase
     {
         var mData = SystemAPI.GetComponentRW<PokerItemCData>(mEntity_PokerItem);
         var mEntity_Poker = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Sprite");
-        var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
-        var mSpriteRenderer1 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Poker);
-        var mSpriteRenderer2 = SystemAPI.ManagedAPI.GetComponent<SpriteRenderer>(mEntity_Back);
-        mSpriteRenderer1.sortingOrder = nOrderId++ + 100;
-        mSpriteRenderer2.sortingOrder = 0;
-        Unity.Assertions.Assert.IsTrue(mSpriteRenderer1.sortingOrder >= 100, "mSpriteRenderer1.sortingOrder: " + mSpriteRenderer1.sortingOrder);
+        //var mEntity_Back = ECSHelper.FindChildEntityByName(EntityManager, mEntity_PokerItem, "Back");
+        //var mSpriteRenderer1 = SystemAPI.ManagedAPI.GetComponent<MeshRenderer>(mEntity_Poker);
+        //var mSpriteRenderer2 = SystemAPI.ManagedAPI.GetComponent<MeshRenderer>(mEntity_Back);
+        //mSpriteRenderer1.sortingOrder = nOrderId++ + 100;
+        //mSpriteRenderer2.sortingOrder = 0;
+        //Unity.Assertions.Assert.IsTrue(mSpriteRenderer1.sortingOrder >= 100, "mSpriteRenderer1.sortingOrder: " + mSpriteRenderer1.sortingOrder);
     }
     
     void onSetBack(Entity mEntity_PokerItem)

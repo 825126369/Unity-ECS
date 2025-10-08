@@ -27,12 +27,6 @@ public struct Material_MainTex_ST_CData : IComponentData
     public float4 Value;
 }
 
-[MaterialProperty("_SortingOrder")]
-public struct MaterialSortingOrder : IComponentData
-{
-    public ushort Value;
-}
-
 
 public class ECS2SpriteRenderer
 {
