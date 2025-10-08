@@ -82,6 +82,14 @@ float4 _Color;
 float4 _MainTex_ST;
 CBUFFER_END
 
+[MaterialProperty("_MainTex_ST")]
+public struct Material_MainTex_ST_CData : IComponentData
+{
+    public float4 Value;
+}
+
+把这个Material_MainTex_ST_CData添加到 Entity 上，就会自动把数据绑定到Material上。
+
 (2) 如何设置层级 ？
 对于3D物体的Order值，可以修改Z值。 默认是Z值 从前往后渲染
 对于2D物体（扑克牌）的Order值，Z值一样了，那么该如何渲染呢？（待思考）
