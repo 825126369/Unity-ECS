@@ -97,4 +97,4 @@ public struct Material_MainTex_ST_CData : IComponentData
 
 (3) URP 2D Renderer 出现一个问题：一旦绘制后，图像一直驻留在屏幕上。解决方法：Camera 中的 Environment 选项框下的 Background 选项，切换为 Solid Color.
 
-(4) 经过验证：无论是官方Demo(鲨鱼例子) 还是这个案例，都不能保证60FPS 稳定帧率。(有可能是我机器太烂，不支持Vulkan 和 DX12 )
+11: 经过验证：无论是官方Demo(鲨鱼例子) 还是这个案例，都不能保证60FPS 稳定帧率。(有可能是我机器太烂，不支持Vulkan 和 DX12 )
